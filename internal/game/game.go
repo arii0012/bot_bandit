@@ -30,7 +30,7 @@ func New(p *player.Player) *Game {
 func (g *Game) Run() {
 	printBanner()
 	fmt.Println("BOT BANDIT: UNDERWORLD  •  Go Edition")
-	fmt.Println("Напиши help чтобы увидеть все команды\n")
+	fmt.Println("Напиши help чтобы увидеть все команды")
 
 	for g.Running {
 		g.printStatus()
