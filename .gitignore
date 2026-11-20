@@ -1,0 +1,5 @@
+bandit
+*.exe
+data/save.json
+.DS_Store
+*.sum
