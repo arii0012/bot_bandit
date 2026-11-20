@@ -1,0 +1,94 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.21', '1.22', '1.23' ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build -v -o bandit .
+
+      - name: Build (Windows)
+        run: GOOS=windows GOARCH=amd64 go build -o bandit.exe .
+
+      - name: Build (macOS)
+        run: GOOS=darwin GOARCH=amd64 go build -o bandit-macos .
+
+      - name: Upload Linux binary
+        if: matrix.go-version == '1.22'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-linux
+          path: bandit
+
+      - name: Upload Windows binary
+        if: matrix.go-version == '1.22'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-windows
+          path: bandit.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build all platforms
+        run: |
+          mkdir -p dist
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o dist/bandit-linux-amd64 .
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/bandit-windows-amd64.exe .
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o dist/bandit-darwin-amd64 .
+          GOOS=darwin  GOARCH=arm64 go build -ldflags="-s -w" -o dist/bandit-darwin-arm64 .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
