@@ -1,103 +1,43 @@
-# BOT BANDIT: UNDERWORLD (Go Edition)
+# BOT BANDIT: UNDERWORLD
 
-Полностью переписанная версия «Бот Бандит» на **Go**.
+2.5D life simulator on **C++20 + Raylib 5.5**.
 
-Криминальный симулятор жизни по 13 городам России с командной системой.
+Borderless fullscreen, rounded UI, cities, cars, heists, crafting, phone, cutscenes, dev console.
 
-## Возможности
-
-- 13 городов с уникальными работами и опасностью
-- Работа, уличные ограбления (`rob`), серьёзные налёты (`heist`)
-- Система крафта (`craft` + `scavenge`)
-- Навыки: stealth, driving, shooting, hacking, negotiation
-- Банды, крипта, даркнет
-- Казино, магазин, инвентарь
-- Розыск (Wanted ★), тепло, энергия
-- Достижения и ежедневные награды
-- Сохранения в JSON
-
-## Быстрый старт
+## Build
 
 ```bash
-go run .
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+./build/botbandit
 ```
 
-Или:
+Raylib and nlohmann/json are downloaded automatically by CMake.
 
-```bash
-go build -o bandit .
-./bandit
-```
+## Controls
 
-## Основные команды
+| Key | Action |
+|-----|--------|
+| Tab | Radial menu |
+| ~ | Dev console |
+| Esc | Pause menu |
+| 1-9 | Quick actions |
+| LMB | Click UI |
+| Enter | Confirm |
 
-```
-help                  — список всех команд
-status / me           — статус персонажа
-work 1                — работать
-rob                   — быстрое ограбление
-heist                 — серьёзное ограбление (с планированием)
-craft                 — система крафта
-craft medkit          — скрафтить аптечку
-scavenge              — поискать материалы
-travel москва car     — поехать на машине
-train strength        — качалка
-skills buy stealth    — прокачать навык
-casino 10000
-gang join Южные
-crypto buy BTC 0.01
-darknet
-shop
-inventory
-daily
-hide / sleep
-save
-quit
-```
-
-## Крафт
-
-Материалы: `scrap`, `electronics`, `chemicals`, `fabric`, `metal`
-
-Добываются командой `scavenge`.
-
-Примеры рецептов:
-- `craft lockpick` — отмычка
-- `craft medkit` — аптечка
-- `craft silencer` — глушитель
-- `craft hacktool` — взломщик
-- `craft armor` — бронежилет
-- `craft emp` — ЭМИ-заряд
-
-## Структура
+## Dev Console (~)
 
 ```
-├── main.go
-├── go.mod
-├── internal/
-│   ├── city/cities.go
-│   ├── player/player.go
-│   └── game/game.go
-└── data/save.json   (создаётся автоматически)
+/give_money 100000
+/spawn_car lambo
+/tp москва
+/wanted 0
+/godmode
+/unlock_all
+/char_editor
+/exit
 ```
-
-## Лицензия
-
-Делай что хочешь. Это фан-проект.
 
 ## GitHub Actions
 
-При каждом push в `main` автоматически:
-
-- Проверяется код (`go vet`)
-- Собирается под Linux / Windows / macOS
-- Бинарники появляются во вкладке **Actions → Artifacts**
-
-Чтобы выпустить релиз с готовыми файлами:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-GitHub сам создаст Release и прикрепит бинарники.
+Push → Windows + Linux artifacts. Tag `v1.0.0` → Release with binaries.

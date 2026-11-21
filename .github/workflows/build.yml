@@ -1,0 +1,83 @@
+name: Build BotBandit
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+  release:
+    types: [published]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install Ninja
+        run: choco install ninja -y
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item build/botbandit.exe dist/ -ErrorAction SilentlyContinue
+          if (Test-Path assets) { Copy-Item -Recurse assets dist/ }
+          Compress-Archive -Path dist/* -DestinationPath BotBandit-Windows-x64.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BotBandit-Windows-x64
+          path: BotBandit-Windows-x64.zip
+          retention-days: 14
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build \
+            libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp build/botbandit dist/ 2>/dev/null || true
+          cp -r assets dist/ 2>/dev/null || true
+          cd dist && tar -czvf ../BotBandit-Linux-x64.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BotBandit-Linux-x64
+          path: BotBandit-Linux-x64.tar.gz
+          retention-days: 14
+
+  release:
+    needs: [build-windows, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/BotBandit-Windows-x64/BotBandit-Windows-x64.zip
+            artifacts/BotBandit-Linux-x64/BotBandit-Linux-x64.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
