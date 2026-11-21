@@ -33,7 +33,9 @@ void Character::Draw(float x, float y) {
   DrawRectangleRounded({x - 10, y + 28, 8, 22}, 0.3f, 4, pants);
   DrawRectangleRounded({x + 2, y + 28, 8, 22}, 0.3f, 4, pants);
   // body
-  DrawRectangleRounded({x - 12, y + breath, 24, 30}, 0.25f, 6, shirt);
+  float turn = cosf(facingAngle_);
+  float bodyW = 18 + fabsf(turn) * 6;
+  DrawRectangleRounded({x - bodyW/2, y + breath, bodyW, 30}, 0.25f, 6, shirt);
   // head
   DrawCircle((int)x, (int)(y - 14 + breath * 0.5f), 14, skin);
   // hair
@@ -80,4 +82,25 @@ std::vector<std::string> Character::AddExp(int amount) {
     msgs.push_back("LEVEL " + std::to_string(level_) + "!");
   }
   return msgs;
+}
+
+void Character::DrawCar(float x, float y) {
+  if (activeCar_.empty()) return;
+  Color body = {carR_, carG_, carB_, 255};
+  // simple side/front based on facing
+  float side = fabsf(sinf(facingAngle_));
+  int w = (int)(70 + side * 20);
+  int h = 28;
+  DrawEllipse((int)x, (int)(y + 18), w/2 + 4, 8, Fade(BLACK, 0.35f));
+  DrawRectangleRounded({x - w/2.f, y - h/2.f, (float)w, (float)h}, 0.3f, 6, body);
+  DrawRectangleRounded({x - w/2.f + 10, y - h/2.f - 12, (float)w - 20, 14}, 0.2f, 4, body);
+  // wheels
+  DrawCircle((int)(x - w/3), (int)(y + h/2), 7, Color{20,20,20,255});
+  DrawCircle((int)(x + w/3), (int)(y + h/2), 7, Color{20,20,20,255});
+  if (neonCar_) {
+    DrawEllipse((int)x, (int)(y + h/2 + 4), w/2, 6, Fade(Color{0, 220, 255, 255}, 0.45f));
+  }
+  if (turboLvl_ > 0) {
+    DrawText("TURBO", (int)(x - 20), (int)(y - 36), 12, Color{244, 196, 48, 255});
+  }
 }

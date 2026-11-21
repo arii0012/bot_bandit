@@ -117,7 +117,8 @@ void Application::Draw() {
   // scene
   world_->Draw(screenW_, screenH_);
   if (weather_) weather_->Draw(screenW_, screenH_);
-  player_->Draw(screenW_ * 0.5f, screenH_ * 0.55f);
+  player_->Draw(screenW_ * 0.5f, screenH_ * 0.50f);
+  player_->DrawCar(screenW_ * 0.5f, screenH_ * 0.72f);
 
   DrawHUD();
   ui_->Draw();

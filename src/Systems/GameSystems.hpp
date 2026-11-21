@@ -21,6 +21,9 @@ public:
   void OpenGarage();
   void OpenBusiness();
   void PlayCutscene(const std::string& id);
+  void DoFight();
+  void BuyPet();
+  void DoSmuggle();
 
 private:
   Application* app_;

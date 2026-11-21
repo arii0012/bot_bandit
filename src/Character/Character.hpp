@@ -21,6 +21,9 @@ public:
 
   void Update(float dt);
   void Draw(float x, float y);
+  void DrawCar(float x, float y);
+  float& Facing() { return facingAngle_; }
+  void SetFacing(float a) { facingAngle_ = a; }
 
   const std::string& Name() const { return name_; }
   void SetName(const std::string& n) { name_ = n; }
@@ -80,4 +83,8 @@ public:
   int hairStyle_ = 0;
   Color hairColor_ = {40, 30, 20, 255};
   float animTime_ = 0.f;
+  float facingAngle_ = 0.f; // radians, 0 = front
+  int engineLvl_ = 0, turboLvl_ = 0;
+  bool neonCar_ = false;
+  unsigned char carR_ = 200, carG_ = 40, carB_ = 40;
 };

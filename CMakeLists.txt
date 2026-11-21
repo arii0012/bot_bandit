@@ -50,6 +50,7 @@ set(SOURCES
   src/Systems/Weather.cpp
   src/Systems/Business.cpp
   src/Smartphone/Smartphone.cpp
+  src/Minigames/Fighting.cpp
 )
 
 add_executable(botbandit ${SOURCES})

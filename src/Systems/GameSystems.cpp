@@ -8,6 +8,7 @@
 #include "Vehicles/Garage.hpp"
 #include "Business.hpp"
 #include "Cutscenes/CutsceneSystem.hpp"
+#include "Minigames/Fighting.hpp"
 #include <cstdlib>
 #include <ctime>
 
@@ -271,3 +272,58 @@ void GameSystems::PlayCutscene(const std::string& id) {
   if (app_->Cutscenes()) app_->Cutscenes()->Play(id);
 }
 
+
+void GameSystems::DoFight() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  auto* city = app_->GetWorld()->Current();
+  if (!city || (!city->hasClub && city->id != "москва" && city->id != "ростов" && city->id != "екатеринбург")) {
+    ui->Toast("Бойцовский клуб недоступен здесь");
+    return;
+  }
+  ui->Modal("БОЙЦОВСКИЙ КЛУБ", {"Ставка 5к", "Ставка 20к", "Ставка 50к", "Отмена"}, [this](int i) {
+    if (i < 0 || i > 2) return;
+    int stakes[] = {5000, 20000, 50000};
+    auto msg = FightingClub::Fight(*app_->Player(), stakes[i]);
+    app_->UI()->Toast(msg);
+  });
+}
+
+void GameSystems::BuyPet() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->Money() < 120000) { ui->Toast("Доберман стоит 120к"); return; }
+  for (auto& it : p->Inv().items) if (it == "Доберман") { ui->Toast("Уже есть пёс"); return; }
+  p->AddMoney(-120000);
+  p->Inv().items.push_back("Доберман");
+  ui->Toast("Доберман охраняет дом (+защита)");
+}
+
+void GameSystems::DoSmuggle() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->ActiveCar().empty()) { ui->Toast("Нужна машина"); return; }
+  if (p->Energy() < 20) { ui->Toast("Нет энергии"); return; }
+  ui->Modal("КОНТРАБАНДА", {
+    "Груз на юг (риск)",
+    "Груз во Владивосток",
+    "Отмена"
+  }, [this](int i) {
+    if (i < 0 || i > 1) return;
+    auto* p = app_->Player();
+    auto* ui = app_->UI();
+    p->SetEnergy(p->Energy() - 18);
+    float chance = 0.55f + p->Skill("driving") * 0.05f + p->turboLvl_ * 0.03f;
+    if ((rand()%1000)/1000.f < chance) {
+      int pay = 40000 + p->Level() * 5000 + (i == 1 ? 30000 : 0);
+      p->AddMoney(pay);
+      p->AddExp(35);
+      ui->Toast("Груз доставлен +" + std::to_string(pay));
+    } else {
+      p->AddHeat(20);
+      p->SetWanted(p->Wanted() + 1);
+      ui->Toast("Пост ГАИ! Груз потерян");
+      if (app_->Cutscenes()) app_->Cutscenes()->Play("arrest");
+    }
+  });
+}

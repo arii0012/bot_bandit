@@ -108,6 +108,12 @@ void DevConsole::Execute(const std::string& line) {
   } else if (cmd == "/biz") {
     app_->Systems()->OpenBusiness();
 
+  } else if (cmd == "/fight") {
+    app_->Systems()->DoFight();
+  } else if (cmd == "/pet") {
+    app_->Systems()->BuyPet();
+  } else if (cmd == "/smuggle") {
+    app_->Systems()->DoSmuggle();
   } else if (cmd == "/exit") {
     app_->RequestExit();
   } else {

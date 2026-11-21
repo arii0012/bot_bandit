@@ -119,57 +119,85 @@ void UISystem::DrawCharacterCreator() {
   int sw = app_->ScreenW(), sh = app_->ScreenH();
   DrawRectangle(0, 0, sw, sh, Config::ColBG());
 
-  // podium
-  float cx = sw * 0.5f, cy = sh * 0.55f;
-  DrawEllipse((int)cx, (int)(cy + 60), 80, 24, Color{60, 40, 50, 200});
-  app_->Player()->Draw(cx, cy);
-
-  DrawText("СОЗДАНИЕ ПЕРСОНАЖА", sw / 2 - 140, 40, 28, Config::ColText());
-  DrawText("ЛКМ по кнопкам · Enter — начать", sw / 2 - 130, 78, 18, Config::ColMuted());
-
   auto& p = *app_->Player();
-  float px = 40, py = 140;
-  bool h = false;
 
-  auto row = [&](const char* label, float y) {
-    DrawText(label, (int)px, (int)y, 18, Config::ColMuted());
+  // rotate with drag or buttons
+  static bool dragging = false;
+  static float lastMX = 0;
+  Vector2 m = GetMousePosition();
+  float cx = sw * 0.55f, cy = sh * 0.52f;
+  Rectangle podium = {cx - 100, cy - 20, 200, 160};
+  if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(m, podium)) {
+    dragging = true; lastMX = m.x;
+  }
+  if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) dragging = false;
+  if (dragging && IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+    p.Facing() += (m.x - lastMX) * 0.02f;
+    lastMX = m.x;
+  }
+
+  // neon podium
+  DrawEllipse((int)cx, (int)(cy + 70), 90, 28, Fade(Config::ColAccent(), 0.35f));
+  DrawEllipse((int)cx, (int)(cy + 70), 70, 18, Fade(Color{244,196,48,255}, 0.25f));
+  p.Draw(cx, cy);
+  p.DrawCar(cx, cy + 110);
+
+  DrawText("СТУДИЯ ПЕРСОНАЖА 360°", 40, 36, 28, Config::ColText());
+  DrawText("Тяни мышью по подиуму — поворот | Q/E — шаг", 40, 70, 16, Config::ColMuted());
+
+  if (IsKeyDown(KEY_Q)) p.Facing() -= 0.04f;
+  if (IsKeyDown(KEY_E)) p.Facing() += 0.04f;
+
+  float px = 40, py = 110;
+  bool h = false;
+  auto btn = [&](Rectangle r, const char* lab, bool on) -> bool {
+    DrawRoundedButton(r, lab, h, on);
+    return h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
   };
 
-  row("Имя: (редактируется в консоли /name)", py);
-  char buf[64];
-  snprintf(buf, sizeof(buf), "Имя: %s", p.Name().c_str());
-  DrawText(buf, (int)px, (int)py + 24, 22, Config::ColText());
+  DrawText("Пол", (int)px, (int)py, 18, Config::ColMuted());
+  if (btn({px, py+22, 90, 36}, "Муж", !p.GenderFemale())) p.SetFemale(false);
+  if (btn({px+100, py+22, 90, 36}, "Жен", p.GenderFemale())) p.SetFemale(true);
 
-  row("Пол", py + 70);
-  Rectangle rM = {px, py + 95, 100, 40};
-  Rectangle rF = {px + 120, py + 95, 100, 40};
-  DrawRoundedButton(rM, "Муж", h, !p.GenderFemale());
-  if (h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) p.SetFemale(false);
-  DrawRoundedButton(rF, "Жен", h, p.GenderFemale());
-  if (h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) p.SetFemale(true);
+  DrawText("Причёска", (int)px, (int)py+70, 18, Config::ColMuted());
+  if (btn({px, py+92, 120, 36}, "Сменить", false)) p.SetHairStyle((p.HairStyle()+1)%8);
 
-  row("Причёска", py + 160);
-  Rectangle rH = {px, py + 185, 140, 40};
-  DrawRoundedButton(rH, "Сменить", h);
-  if (h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    p.SetHairStyle((p.HairStyle() + 1) % 6);
-
-  // random colors
-  row("Цвет волос", py + 250);
-  Color cols[] = { {30,25,20,255}, {180,140,60,255}, {20,20,25,255}, {160,40,40,255}, {200,200,210,255} };
-  for (int i = 0; i < 5; ++i) {
-    Rectangle rc = {px + i * 44.f, py + 275, 36, 36};
+  DrawText("Цвет волос", (int)px, (int)py+140, 18, Config::ColMuted());
+  Color cols[] = {{30,25,20,255},{180,140,60,255},{20,20,25,255},{160,40,40,255},{200,200,210,255},{80,40,120,255}};
+  for (int i = 0; i < 6; ++i) {
+    Rectangle rc = {px + i*42.f, py+162, 34, 34};
     DrawRectangleRounded(rc, 0.3f, 6, cols[i]);
-    if (CheckCollisionPointRec(GetMousePosition(), rc) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    if (CheckCollisionPointRec(m, rc) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
       p.SetHairColor(cols[i]);
   }
 
-  // start
-  Rectangle start = {(float)sw * 0.5f - 100, (float)sh - 100, 200, 50};
-  DrawRoundedButton(start, "НАЧАТЬ ИГРУ", h, true);
-  if ((h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER)) {
+  DrawText("Пресеты", (int)px, (int)py+210, 18, Config::ColMuted());
+  if (btn({px, py+232, 100, 34}, "Улица", false)) {
+    p.SetHairStyle(2); p.SetHairColor({20,20,25,255}); p.SetFemale(false);
+  }
+  if (btn({px+110, py+232, 100, 34}, "Кибер", false)) {
+    p.SetHairStyle(5); p.SetHairColor({80,40,120,255});
+  }
+  if (btn({px+220, py+232, 100, 34}, "Бизнес", false)) {
+    p.SetHairStyle(0); p.SetHairColor({30,25,20,255});
+  }
+  if (btn({px, py+274, 140, 34}, "Случайный", false)) {
+    p.SetFemale(GetRandomValue(0,1)==1);
+    p.SetHairStyle(GetRandomValue(0,7));
+    p.SetHairColor(cols[GetRandomValue(0,5)]);
+    p.Facing() = GetRandomValue(0,628)/100.f;
+  }
+
+  // angle indicator
+  char abuf[32];
+  snprintf(abuf, sizeof(abuf), "Угол: %.0f°", p.Facing() * 180.f / 3.14159f);
+  DrawText(abuf, (int)(cx - 40), (int)(cy + 150), 16, Config::ColMuted());
+
+  Rectangle start = {(float)sw * 0.5f - 110, (float)sh - 90, 220, 52};
+  if (btn(start, "НАЧАТЬ ИГРУ", true) || IsKeyPressed(KEY_ENTER)) {
     app_->SetState(AppState::Playing);
     if (app_->Cutscenes()) app_->Cutscenes()->Play("debut");
     Toast("Добро пожаловать в Underworld");
   }
 }
+
