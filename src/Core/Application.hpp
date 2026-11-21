@@ -11,6 +11,8 @@ class DevConsole;
 class SaveSystem;
 class CutsceneSystem;
 class GameSystems;
+class Smartphone;
+class WeatherSystem;
 
 enum class AppState {
   Boot,
@@ -38,6 +40,9 @@ public:
   DevConsole* Console() { return console_.get(); }
   SaveSystem* Saves() { return saves_.get(); }
   GameSystems* Systems() { return systems_.get(); }
+  Smartphone* Phone() { return phone_.get(); }
+  WeatherSystem* Weather() { return weather_.get(); }
+  CutsceneSystem* Cutscenes() { return cutscenes_.get(); }
 
   void RequestExit() { running_ = false; }
   float Dt() const { return dt_; }
@@ -63,4 +68,6 @@ private:
   std::unique_ptr<SaveSystem> saves_;
   std::unique_ptr<CutsceneSystem> cutscenes_;
   std::unique_ptr<GameSystems> systems_;
+  std::unique_ptr<Smartphone> phone_;
+  std::unique_ptr<WeatherSystem> weather_;
 };

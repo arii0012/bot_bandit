@@ -17,6 +17,10 @@ public:
   void DoDaily();
   void DoHide();
   void DoCraft(const std::string& recipeId);
+  void OpenCraft();
+  void OpenGarage();
+  void OpenBusiness();
+  void PlayCutscene(const std::string& id);
 
 private:
   Application* app_;

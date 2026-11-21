@@ -41,10 +41,15 @@ set(SOURCES
   src/World/City.cpp
   src/World/World.cpp
   src/Vehicles/Vehicle.cpp
+  src/Vehicles/Garage.cpp
   src/Cutscenes/CutsceneSystem.cpp
   src/DevConsole/DevConsole.cpp
   src/SaveSystem/SaveSystem.cpp
   src/Systems/GameSystems.cpp
+  src/Systems/Crafting.cpp
+  src/Systems/Weather.cpp
+  src/Systems/Business.cpp
+  src/Smartphone/Smartphone.cpp
 )
 
 add_executable(botbandit ${SOURCES})

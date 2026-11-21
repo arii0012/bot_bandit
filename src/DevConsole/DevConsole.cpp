@@ -4,6 +4,8 @@
 #include "Character/Character.hpp"
 #include "World/World.hpp"
 #include "World/City.hpp"
+#include "Systems/Weather.hpp"
+#include "Systems/GameSystems.hpp"
 #include <sstream>
 #include <algorithm>
 
@@ -43,7 +45,8 @@ void DevConsole::Execute(const std::string& line) {
   if (cmd == "/help") {
     Print("/give_money N  /wanted N  /tp city  /godmode");
     Print("/spawn_car name  /unlock_all  /max_stats  /name X");
-    Print("/exit  /save");
+    Print("/exit  /save  /weather rain|clear|neon|fog");
+    Print("/garage  /biz  /cutscene id");
   } else if (cmd == "/give_money") {
     int64_t v = 0; iss >> v;
     p->AddMoney(v);
@@ -86,6 +89,25 @@ void DevConsole::Execute(const std::string& line) {
   } else if (cmd == "/save") {
     app_->Saves()->Save(*p, *w);
     Print("saved");
+  
+  } else if (cmd == "/weather") {
+    std::string w; iss >> w;
+    if (!app_->Weather()) { Print("no weather"); }
+    else if (w == "rain") { app_->Weather()->Set(WeatherType::Rain); Print("rain"); }
+    else if (w == "clear") { app_->Weather()->Set(WeatherType::Clear); Print("clear"); }
+    else if (w == "neon") { app_->Weather()->Set(WeatherType::NeonNight); Print("neon"); }
+    else if (w == "fog") { app_->Weather()->Set(WeatherType::Fog); Print("fog"); }
+    else Print("rain|clear|neon|fog");
+  } else if (cmd == "/cutscene") {
+    std::string id; iss >> id;
+    if (id.empty()) id = "debut";
+    if (app_->Cutscenes()) app_->Cutscenes()->Play(id);
+    Print("play " + id);
+  } else if (cmd == "/garage") {
+    app_->Systems()->OpenGarage();
+  } else if (cmd == "/biz") {
+    app_->Systems()->OpenBusiness();
+
   } else if (cmd == "/exit") {
     app_->RequestExit();
   } else {

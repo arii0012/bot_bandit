@@ -4,6 +4,10 @@
 #include "Character/Character.hpp"
 #include "World/World.hpp"
 #include "World/City.hpp"
+#include "Crafting.hpp"
+#include "Vehicles/Garage.hpp"
+#include "Business.hpp"
+#include "Cutscenes/CutsceneSystem.hpp"
 #include <cstdlib>
 #include <ctime>
 
@@ -96,10 +100,12 @@ void GameSystems::DoHeist() {
       p->AddHeat(t.heat);
       p->AddExp(70);
       ui->Toast("УСПЕХ +" + std::to_string(amount));
+      if (app_->Cutscenes()) app_->Cutscenes()->Play("heist_win");
     } else {
       p->AddHeat(t.heat + 18);
       p->SetWanted(p->Wanted() + 1);
       ui->Toast("ПРОВАЛ налёта");
+      if (app_->Cutscenes()) app_->Cutscenes()->Play("arrest");
     }
   });
 }
@@ -184,21 +190,84 @@ void GameSystems::DoHide() {
 void GameSystems::DoCraft(const std::string& recipeId) {
   auto* p = app_->Player();
   auto* ui = app_->UI();
-  if (recipeId == "medkit") {
-    if (p->Inv().materials["fabric"] >= 2 && p->Inv().materials["chemicals"] >= 2) {
-      p->Inv().materials["fabric"] -= 2;
-      p->Inv().materials["chemicals"] -= 2;
-      p->Inv().items.push_back("Аптечка");
-      ui->Toast("Скрафтил аптечку");
-    } else ui->Toast("Нужно fabric×2 chemicals×2");
-  } else if (recipeId == "lockpick") {
-    if (p->Inv().materials["metal"] >= 2 && p->Inv().materials["scrap"] >= 3) {
-      p->Inv().materials["metal"] -= 2;
-      p->Inv().materials["scrap"] -= 3;
-      p->Inv().items.push_back("Отмычка");
-      ui->Toast("Скрафтил отмычку");
-    } else ui->Toast("Нужно metal×2 scrap×3");
-  } else {
-    ui->Toast("Рецепт: medkit | lockpick");
-  }
+  std::string msg;
+  CraftingSystem::Craft(*p, recipeId, msg);
+  ui->Toast(msg);
 }
+
+void GameSystems::OpenCraft() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  std::vector<std::string> opts;
+  std::vector<std::string> ids;
+  for (auto& r : CraftingSystem::Recipes()) {
+    std::string reason;
+    bool ok = CraftingSystem::CanCraft(*p, r, reason);
+    std::string line = CraftingSystem::FormatRecipe(r);
+    if (!ok) line += " (" + reason + ")";
+    opts.push_back(line);
+    ids.push_back(r.id);
+  }
+  opts.push_back("Поиск материалов (scavenge)");
+  opts.push_back("Отмена");
+  ui->Modal("КРАФТ", opts, [this, ids](int i) {
+    if (i < 0) return;
+    if (i == (int)ids.size()) { DoScavenge(); return; }
+    if (i > (int)ids.size()) return;
+    DoCraft(ids[i]);
+  });
+}
+
+void GameSystems::OpenGarage() {
+  auto* ui = app_->UI();
+  std::vector<std::string> opts;
+  std::vector<std::string> ids;
+  for (auto& c : Garage::Catalog()) {
+    opts.push_back(c.name + " — " + std::to_string(c.price) + " руб.");
+    ids.push_back(c.id);
+  }
+  opts.push_back("Тюнинг: двигатель");
+  opts.push_back("Тюнинг: турбо");
+  opts.push_back("Тюнинг: неон");
+  opts.push_back("Тюнинг: покраска");
+  opts.push_back("Отмена");
+  int nCars = (int)ids.size();
+  ui->Modal("ГАРАЖ / АВТОСАЛОН", opts, [this, ids, nCars](int i) {
+    auto* p = app_->Player();
+    auto* ui = app_->UI();
+    std::string msg;
+    if (i < 0 || i >= nCars + 4) return;
+    if (i < nCars) {
+      Garage::Buy(*p, ids[i], msg);
+      if (msg.find("Купил") != std::string::npos && app_->Cutscenes())
+        app_->Cutscenes()->Play("keys");
+    } else if (i == nCars) Garage::Tune(*p, "engine", msg);
+    else if (i == nCars + 1) Garage::Tune(*p, "turbo", msg);
+    else if (i == nCars + 2) Garage::Tune(*p, "neon", msg);
+    else if (i == nCars + 3) Garage::Tune(*p, "paint", msg);
+    ui->Toast(msg);
+  });
+}
+
+void GameSystems::OpenBusiness() {
+  auto* ui = app_->UI();
+  ui->Modal("БИЗНЕС", {
+    "Купить / апгрейд точку",
+    "Собрать доход",
+    "Отмена"
+  }, [this](int i) {
+    auto* p = app_->Player();
+    auto* w = app_->GetWorld();
+    auto* ui = app_->UI();
+    std::string msg;
+    if (i == 0) BusinessSystem::BuyOrUpgrade(*p, *w, msg);
+    else if (i == 1) BusinessSystem::Collect(*p, *w, msg);
+    else return;
+    ui->Toast(msg);
+  });
+}
+
+void GameSystems::PlayCutscene(const std::string& id) {
+  if (app_->Cutscenes()) app_->Cutscenes()->Play(id);
+}
+

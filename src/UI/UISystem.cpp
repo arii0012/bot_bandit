@@ -26,6 +26,8 @@ void UISystem::HandleHotkeys() {
   if (IsKeyPressed(KEY_FIVE)) sys->OpenShop();
   if (IsKeyPressed(KEY_SIX)) sys->DoScavenge();
   if (IsKeyPressed(KEY_SEVEN)) sys->DoDaily();
+  if (IsKeyPressed(KEY_EIGHT)) sys->OpenGarage();
+  if (IsKeyPressed(KEY_NINE)) sys->OpenBusiness();
 }
 
 void UISystem::ToggleRadial() { radialOpen_ = !radialOpen_; }
@@ -86,7 +88,8 @@ void UISystem::Draw() {
         if (i == 2) sys->DoHeist();
         if (i == 3) sys->OpenTravel();
         if (i == 4) sys->OpenShop();
-        if (i == 5) sys->DoScavenge();
+        if (i == 5) sys->OpenCraft();
+        if (i == 6) { if (app_->Phone()) app_->Phone()->Open(); }
         if (i == 7) sys->DoHide();
       }
     }
@@ -166,6 +169,7 @@ void UISystem::DrawCharacterCreator() {
   DrawRoundedButton(start, "НАЧАТЬ ИГРУ", h, true);
   if ((h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) || IsKeyPressed(KEY_ENTER)) {
     app_->SetState(AppState::Playing);
+    if (app_->Cutscenes()) app_->Cutscenes()->Play("debut");
     Toast("Добро пожаловать в Underworld");
   }
 }

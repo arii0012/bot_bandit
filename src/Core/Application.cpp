@@ -8,12 +8,15 @@
 #include "SaveSystem/SaveSystem.hpp"
 #include "Cutscenes/CutsceneSystem.hpp"
 #include "Systems/GameSystems.hpp"
+#include "Smartphone/Smartphone.hpp"
+#include "Systems/Weather.hpp"
 #include <cmath>
 
 Application::Application() {
   InitWindowBorderless();
   SetTargetFPS(Config::TARGET_FPS);
-  SetExitKey(0); // disable ESC quit — we handle it
+  SetExitKey(0);
+  HideCursor();
 
   assets_ = std::make_unique<AssetManager>();
   assets_->LoadAll("assets");
@@ -25,6 +28,8 @@ Application::Application() {
   saves_ = std::make_unique<SaveSystem>();
   cutscenes_ = std::make_unique<CutsceneSystem>();
   systems_ = std::make_unique<GameSystems>(this);
+  phone_ = std::make_unique<Smartphone>(this);
+  weather_ = std::make_unique<WeatherSystem>();
 
   if (saves_->Exists()) {
     saves_->Load(*player_, *world_);
@@ -57,7 +62,6 @@ void Application::Run() {
     dt_ = GetFrameTime();
     Update();
     BeginDrawing();
-    ClearBackground(Config::ColBG());
     Draw();
     EndDrawing();
   }
@@ -90,8 +94,14 @@ void Application::Update() {
     systems_->Update(dt_);
     player_->Update(dt_);
     world_->Update(dt_);
+    if (weather_) weather_->Update(dt_, world_->TimeOfDay());
+    if (cutscenes_) cutscenes_->Update(dt_);
     if (IsKeyPressed(KEY_TAB)) ui_->ToggleRadial();
     ui_->Update(dt_);
+    if (phone_) phone_->Update(dt_);
+    if (IsKeyPressed(KEY_P) && phone_) {
+      if (phone_->IsOpen()) phone_->Close(); else phone_->Open();
+    }
   }
 }
 
@@ -106,10 +116,13 @@ void Application::Draw() {
 
   // scene
   world_->Draw(screenW_, screenH_);
+  if (weather_) weather_->Draw(screenW_, screenH_);
   player_->Draw(screenW_ * 0.5f, screenH_ * 0.55f);
 
   DrawHUD();
   ui_->Draw();
+  if (phone_ && phone_->IsOpen()) phone_->Draw(screenW_, screenH_);
+  if (cutscenes_ && cutscenes_->Active()) cutscenes_->Draw(screenW_, screenH_);
 
   if (state_ == AppState::Pause) DrawPauseMenu();
   if (state_ == AppState::Console) console_->Draw();
@@ -135,7 +148,7 @@ void Application::DrawHUD() {
   DrawText(buf, (int)(pad + 14), (int)(pad + 14), 20, Config::ColText());
 
   // bottom action hints
-  const char* hints = "[1] Work  [2] Rob  [3] Heist  [4] Travel  [5] Shop  [6] Craft  [Tab] Menu  [~] Console  [Esc] Pause";
+  const char* hints = "[1] Work  [2] Rob  [3] Heist  [4] Travel  [5] Shop  [6] Craft  [8] Garage  [9] Biz  [P] Phone  [Tab] Menu  [~] Console  [Esc] Pause";
   DrawText(hints, (int)pad, screenH_ - 28, 16, Config::ColMuted());
 }
 

@@ -1,4 +1,5 @@
 #include "AssetManager.hpp"
+#include "ProceduralAssetBuilder.hpp"
 #include <filesystem>
 #include <iostream>
 
@@ -6,6 +7,7 @@ namespace fs = std::filesystem;
 
 void AssetManager::LoadAll(const std::string& root) {
   root_ = root;
+  ProceduralAssetBuilder::EnsureGenerated(root);
   if (!fs::exists(root)) {
     fs::create_directories(root);
   }
