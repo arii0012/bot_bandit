@@ -172,16 +172,28 @@ void UISystem::DrawCharacterCreator() {
   }
 
   DrawText("Пресеты", (int)px, (int)py+210, 18, Config::ColMuted());
-  if (btn({px, py+232, 100, 34}, "Улица", false)) {
-    p.SetHairStyle(2); p.SetHairColor({20,20,25,255}); p.SetFemale(false);
+  if (btn({px, py+232, 90, 32}, "Улица", false)) {
+    p.SetFemale(false); p.SetHairStyle(2); p.SetHairColor({20,20,25,255});
   }
-  if (btn({px+110, py+232, 100, 34}, "Кибер", false)) {
-    p.SetHairStyle(5); p.SetHairColor({80,40,120,255});
+  if (btn({px+95, py+232, 90, 32}, "Кибер", false)) {
+    p.SetFemale(false); p.SetHairStyle(5); p.SetHairColor({80,40,120,255});
   }
-  if (btn({px+220, py+232, 100, 34}, "Бизнес", false)) {
-    p.SetHairStyle(0); p.SetHairColor({30,25,20,255});
+  if (btn({px+190, py+232, 90, 32}, "Бизнес", false)) {
+    p.SetFemale(false); p.SetHairStyle(0); p.SetHairColor({30,25,20,255});
   }
-  if (btn({px, py+274, 140, 34}, "Случайный", false)) {
+  if (btn({px+285, py+232, 90, 32}, "Блондин", false)) {
+    p.SetFemale(false); p.SetHairStyle(1); p.SetHairColor({200,180,100,255});
+  }
+  if (btn({px, py+270, 90, 32}, "Модель", false)) {
+    p.SetFemale(true); p.SetHairStyle(3); p.SetHairColor({30,25,20,255});
+  }
+  if (btn({px+95, py+270, 90, 32}, "Рокерша", false)) {
+    p.SetFemale(true); p.SetHairStyle(2); p.SetHairColor({160,40,40,255});
+  }
+  if (btn({px+190, py+270, 90, 32}, "Блондинка", false)) {
+    p.SetFemale(true); p.SetHairStyle(1); p.SetHairColor({220,200,120,255});
+  }
+  if (btn({px+285, py+270, 90, 32}, "Случайный", false)) {
     p.SetFemale(GetRandomValue(0,1)==1);
     p.SetHairStyle(GetRandomValue(0,7));
     p.SetHairColor(cols[GetRandomValue(0,5)]);

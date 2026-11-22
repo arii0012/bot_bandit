@@ -12,7 +12,6 @@ EngineAudio::EngineAudio() {
   if (IsAudioDeviceReady()) {
     // smaller buffer / lower rate = less CPU
     stream_ = LoadAudioStream(22050, 16, 1);
-    SetAudioStreamBufferSizeDefault(1024);
     SetAudioStreamCallback(stream_, Callback);
     ready_ = true;
   }

@@ -85,7 +85,7 @@ target_include_directories(botbandit PRIVATE
 target_link_libraries(botbandit PRIVATE raylib nlohmann_json::nlohmann_json)
 
 if(MSVC)
-  target_compile_options(botbandit PRIVATE /W3 /permissive- /utf-8)
+  target_compile_options(botbandit PRIVATE /W3 /permissive- /utf-8 /EHsc)
   target_compile_definitions(botbandit PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
   target_compile_options(botbandit PRIVATE -Wall -Wextra)

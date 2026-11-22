@@ -97,3 +97,7 @@ std::string CarCustomizer::Apply(Character& p, const std::string& opt, std::stri
   }
   return msg;
 }
+
+void CarCustomizer::OpenMenu(Application* app) {
+  if (app && app->Systems()) app->Systems()->OpenCarCustom();
+}
