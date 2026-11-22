@@ -24,6 +24,11 @@ public:
   void DoFight();
   void BuyPet();
   void DoSmuggle();
+  void DoRace();
+  void OpenSmartHome();
+  void OpenStudio();
+  void BuyMansion();
+  void DoAutopilotTravel();
 
 private:
   Application* app_;

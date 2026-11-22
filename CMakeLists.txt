@@ -51,6 +51,9 @@ set(SOURCES
   src/Systems/Business.cpp
   src/Smartphone/Smartphone.cpp
   src/Minigames/Fighting.cpp
+  src/Systems/SmartHome.cpp
+  src/Minigames/DJ.cpp
+  src/Minigames/Racing.cpp
 )
 
 add_executable(botbandit ${SOURCES})

@@ -149,7 +149,7 @@ void Application::DrawHUD() {
   DrawText(buf, (int)(pad + 14), (int)(pad + 14), 20, Config::ColText());
 
   // bottom action hints
-  const char* hints = "[1] Work  [2] Rob  [3] Heist  [4] Travel  [5] Shop  [6] Craft  [8] Garage  [9] Biz  [P] Phone  [Tab] Menu  [~] Console  [Esc] Pause";
+  const char* hints = "[1] Work  [2] Rob  [3] Heist  [4] Travel  [5] Shop  [6] Craft  [8] Garage  [9] Biz  [P] Phone  [~] Console  [Tab] Menu  [~] Console  [Esc] Pause";
   DrawText(hints, (int)pad, screenH_ - 28, 16, Config::ColMuted());
 }
 

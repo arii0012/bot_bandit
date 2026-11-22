@@ -55,3 +55,11 @@ cmake --build build --parallel
 - Business buy/upgrade/collect
 - Cutscenes: debut, keys, heist, arrest
 - Save JSON, GitHub Actions CI
+
+## More systems
+
+- `/race` — street race / pink slip
+- `/home` — smart home (needs mansion)
+- `/studio` — music tracks & royalties
+- `/autopilot` — Tesla/Mercedes travel
+- `/fight` `/pet` `/smuggle`

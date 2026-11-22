@@ -1,4 +1,5 @@
 #include "GameSystems.hpp"
+#include <algorithm>
 #include "Core/Application.hpp"
 #include "UI/UISystem.hpp"
 #include "Character/Character.hpp"
@@ -9,6 +10,10 @@
 #include "Business.hpp"
 #include "Cutscenes/CutsceneSystem.hpp"
 #include "Minigames/Fighting.hpp"
+#include "Minigames/Racing.hpp"
+#include "Minigames/DJ.hpp"
+#include "SmartHome.hpp"
+#include "Systems/Weather.hpp"
 #include <cstdlib>
 #include <ctime>
 
@@ -325,5 +330,97 @@ void GameSystems::DoSmuggle() {
       ui->Toast("Пост ГАИ! Груз потерян");
       if (app_->Cutscenes()) app_->Cutscenes()->Play("arrest");
     }
+  });
+}
+
+void GameSystems::DoRace() {
+  auto* ui = app_->UI();
+  ui->Modal("СТРИТРЕСИНГ", {
+    "Гонка на деньги",
+    "PINK SLIP (на тачку)",
+    "Отмена"
+  }, [this](int i) {
+    if (i < 0 || i > 1) return;
+    auto msg = StreetRace::Race(*app_->Player(), app_->Weather(), i == 1);
+    app_->UI()->Toast(msg);
+  });
+}
+
+void GameSystems::BuyMansion() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->Inv().materials["house_mansion"] > 0) { ui->Toast("Особняк уже есть"); return; }
+  int cost = 8500000;
+  if (p->Money() < cost) { ui->Toast("Особняк: 8.5 млн"); return; }
+  p->AddMoney(-cost);
+  p->Inv().materials["house_mansion"] = 1;
+  p->Inv().houses.push_back("Особняк");
+  ui->Toast("Ключи от особняка!");
+  if (app_->Cutscenes()) app_->Cutscenes()->Play("mansion");
+}
+
+void GameSystems::OpenSmartHome() {
+  auto* ui = app_->UI();
+  ui->Modal("УМНЫЙ ДОМ", {
+    "Свет", "Сигнализация", "Сейф", "Вечеринка",
+    "Заказ еды", "Заказ оружия", "Купить особняк", "Отмена"
+  }, [this](int i) {
+    auto* p = app_->Player();
+    auto* ui = app_->UI();
+    std::string msg;
+    switch (i) {
+      case 0: msg = SmartHome::ToggleLight(*p); break;
+      case 1: msg = SmartHome::ToggleAlarm(*p); break;
+      case 2: msg = SmartHome::OpenSafe(*p); break;
+      case 3: msg = SmartHome::Party(*p); break;
+      case 4: msg = SmartHome::OrderGear(*p, "food"); break;
+      case 5: msg = SmartHome::OrderGear(*p, "weapon"); break;
+      case 6: BuyMansion(); return;
+      default: return;
+    }
+    ui->Toast(msg);
+  });
+}
+
+void GameSystems::OpenStudio() {
+  auto* ui = app_->UI();
+  ui->Modal("МУЗЫКАЛЬНАЯ СТУДИЯ", {
+    "Записать трек (8к)",
+    "Собрать роялти",
+    "Отмена"
+  }, [this](int i) {
+    auto* p = app_->Player();
+    std::string msg;
+    if (i == 0) msg = MusicStudio::ProduceTrack(*p);
+    else if (i == 1) msg = MusicStudio::CollectRoyalties(*p);
+    else return;
+    app_->UI()->Toast(msg);
+  });
+}
+
+void GameSystems::DoAutopilotTravel() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  std::string car = p->ActiveCar();
+  bool ap = car.find("Tesla") != std::string::npos || car.find("Mercedes") != std::string::npos;
+  if (!ap) { ui->Toast("Автопилот: только Tesla / Mercedes"); return; }
+  // open travel with discount flag via cheaper path
+  auto& list = AllCities();
+  std::vector<std::string> opts;
+  for (auto& c : list) opts.push_back(c.name + " (автопилот)");
+  opts.push_back("Отмена");
+  ui->Modal("АВТОПИЛОТ", opts, [this](int i) {
+    auto& list = AllCities();
+    if (i < 0 || i >= (int)list.size()) return;
+    auto* p = app_->Player();
+    auto* w = app_->GetWorld();
+    int cost = 1500 + abs((int)(list[i].mapX * 800) - (int)(w->Current()->mapX * 800));
+    if (p->Money() < cost) { app_->UI()->Toast("Нужно " + std::to_string(cost)); return; }
+    p->AddMoney(-cost);
+    p->SetEnergy(std::min(100, p->Energy() + 5));
+    w->SetCity(list[i].id);
+    p->SetCity(list[i].id);
+    app_->UI()->Toast("Автопилот: " + list[i].name);
+    if (app_->Cutscenes()) app_->Cutscenes()->Play("travel");
   });
 }

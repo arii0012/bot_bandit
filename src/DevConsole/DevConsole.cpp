@@ -114,6 +114,14 @@ void DevConsole::Execute(const std::string& line) {
     app_->Systems()->BuyPet();
   } else if (cmd == "/smuggle") {
     app_->Systems()->DoSmuggle();
+  } else if (cmd == "/race") {
+    app_->Systems()->DoRace();
+  } else if (cmd == "/home") {
+    app_->Systems()->OpenSmartHome();
+  } else if (cmd == "/studio") {
+    app_->Systems()->OpenStudio();
+  } else if (cmd == "/autopilot") {
+    app_->Systems()->DoAutopilotTravel();
   } else if (cmd == "/exit") {
     app_->RequestExit();
   } else {
