@@ -14,6 +14,10 @@ class GameSystems;
 class Smartphone;
 class WeatherSystem;
 class DriftPhysics;
+class InventoryUI;
+class EngineAudio;
+class ExhaustParticles;
+class Shaders3D;
 
 enum class AppState {
   Boot,
@@ -44,6 +48,8 @@ public:
   Smartphone* Phone() { return phone_.get(); }
   WeatherSystem* Weather() { return weather_.get(); }
   CutsceneSystem* Cutscenes() { return cutscenes_.get(); }
+  InventoryUI* InvUI() { return inv_.get(); }
+  Shaders3D* Shaders() { return shaders_.get(); }
 
   void RequestExit() { running_ = false; }
   float Dt() const { return dt_; }
@@ -72,4 +78,8 @@ private:
   std::unique_ptr<Smartphone> phone_;
   std::unique_ptr<WeatherSystem> weather_;
   std::unique_ptr<DriftPhysics> drift_;
+  std::unique_ptr<InventoryUI> inv_;
+  std::unique_ptr<EngineAudio> engineAudio_;
+  std::unique_ptr<ExhaustParticles> exhaust_;
+  std::unique_ptr<Shaders3D> shaders_;
 };
