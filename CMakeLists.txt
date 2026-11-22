@@ -36,6 +36,8 @@ set(SOURCES
   src/Graphics/AssetManager.cpp
   src/Graphics/ProceduralAssetBuilder.cpp
   src/Graphics/ExhaustParticles.cpp
+  src/Graphics/Shaders3D.cpp
+  src/Graphics/ModelStore.cpp
   src/UI/UISystem.cpp
   src/UI/InventoryUI.cpp
   src/Character/Character.cpp

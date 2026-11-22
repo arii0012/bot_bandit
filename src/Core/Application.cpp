@@ -48,6 +48,7 @@ Application::~Application() {
   if (player_ && world_) {
     saves_->Save(*player_, *world_);
   }
+  if (shaders_) shaders_->Shutdown();
   CloseWindow();
 }
 
@@ -139,7 +140,9 @@ void Application::Draw() {
   // scene
   world_->Draw(screenW_, screenH_);
   if (weather_) weather_->Draw(screenW_, screenH_);
+  if (shaders_ && shaders_->Ready()) shaders_->BeginLit();
   player_->Draw(screenW_ * 0.5f, screenH_ * 0.50f);
+  if (shaders_ && shaders_->Ready()) shaders_->EndLit();
   if (player_->Inv().materials["drift_mode"] > 0 && drift_) {
     auto& vis = CarCustomizer::Visual(*player_);
     Color body = {vis.r, vis.g, vis.b, 255};
