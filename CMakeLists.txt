@@ -55,12 +55,13 @@ set(SOURCES
   src/Systems/Crafting.cpp
   src/Systems/Weather.cpp
   src/Systems/Business.cpp
+  src/Systems/SmartHome.cpp
+  src/Systems/Damage.cpp
   src/Systems/EngineAudio.cpp
   src/Smartphone/Smartphone.cpp
   src/Minigames/Fighting.cpp
-  src/Systems/SmartHome.cpp
-  src/Minigames/DJ.cpp
   src/Minigames/Racing.cpp
+  src/Minigames/DJ.cpp
 )
 
 add_executable(botbandit ${SOURCES})
@@ -78,12 +79,13 @@ target_include_directories(botbandit PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src/Systems
   ${CMAKE_CURRENT_SOURCE_DIR}/src/DevConsole
   ${CMAKE_CURRENT_SOURCE_DIR}/src/SaveSystem
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/Minigames
 )
 
 target_link_libraries(botbandit PRIVATE raylib nlohmann_json::nlohmann_json)
 
 if(MSVC)
-  target_compile_options(botbandit PRIVATE /W3 /permissive-)
+  target_compile_options(botbandit PRIVATE /W3 /permissive- /utf-8)
   target_compile_definitions(botbandit PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
   target_compile_options(botbandit PRIVATE -Wall -Wextra)
@@ -97,7 +99,7 @@ add_custom_command(TARGET botbandit POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:botbandit>/assets
   COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:botbandit>/data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:botbandit>/assets
-  COMMENT "Copy assets"
+  COMMENT "Copy assets next to binary"
 )
 
 install(TARGETS botbandit RUNTIME DESTINATION bin)
