@@ -122,6 +122,23 @@ void DevConsole::Execute(const std::string& line) {
     app_->Systems()->OpenStudio();
   } else if (cmd == "/autopilot") {
     app_->Systems()->DoAutopilotTravel();
+  } else if (cmd == "/drift") {
+    app_->Systems()->StartDriftMode();
+  } else if (cmd == "/custom") {
+    app_->Systems()->OpenCarCustom();
+  } else if (cmd == "/night") {
+    bool on = true;
+    std::string a; iss >> a;
+    if (a == "off" || a == "0") on = false;
+    if (app_->Weather()) app_->Weather()->SetNightMode(on);
+    Print(on ? "night ON" : "night OFF");
+  } else if (cmd == "/tires") {
+    std::string c; iss >> c;
+    Print("tire compound: soft|med|hard via /custom tires");
+  } else if (cmd == "/auction") {
+    app_->Systems()->OpenAuction();
+  } else if (cmd == "/repair") {
+    app_->Systems()->RepairProject();
   } else if (cmd == "/exit") {
     app_->RequestExit();
   } else {

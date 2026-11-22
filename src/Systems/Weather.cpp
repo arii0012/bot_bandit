@@ -6,6 +6,11 @@ void WeatherSystem::Set(WeatherType t) {
   type_ = t;
   rain_.clear();
 }
+void WeatherSystem::SetNightMode(bool on) {
+  nightMode_ = on;
+  if (on) type_ = WeatherType::NeonNight;
+  else if (type_ == WeatherType::NeonNight) type_ = WeatherType::Clear;
+}
 
 std::string WeatherSystem::Name() const {
   switch (type_) {
@@ -60,7 +65,11 @@ void WeatherSystem::Draw(int sw, int sh) {
     DrawRectangle(0, 0, sw, sh, Fade(Color{30, 40, 60, 255}, 0.12f));
   } else if (type_ == WeatherType::Fog) {
     DrawRectangle(0, 0, sw, sh, Fade(Color{180, 180, 190, 255}, 0.18f));
-  } else if (type_ == WeatherType::NeonNight) {
-    DrawRectangle(0, 0, sw, sh / 2, Fade(Color{80, 0, 60, 255}, 0.15f));
+  } else if (type_ == WeatherType::NeonNight || nightMode_) {
+    DrawRectangle(0, 0, sw, sh, Fade(Color{5, 0, 20, 255}, 0.45f));
+    DrawRectangle(0, 0, sw, sh / 3, Fade(Color{120, 0, 80, 255}, 0.12f));
+    // street neon blobs
+    DrawCircle(sw/4, sh*2/3, 80, Fade(Color{255, 0, 120, 255}, 0.08f));
+    DrawCircle(sw*3/4, sh*2/3, 100, Fade(Color{0, 200, 255, 255}, 0.08f));
   }
 }

@@ -13,6 +13,7 @@ class CutsceneSystem;
 class GameSystems;
 class Smartphone;
 class WeatherSystem;
+class DriftPhysics;
 
 enum class AppState {
   Boot,
@@ -70,4 +71,5 @@ private:
   std::unique_ptr<GameSystems> systems_;
   std::unique_ptr<Smartphone> phone_;
   std::unique_ptr<WeatherSystem> weather_;
+  std::unique_ptr<DriftPhysics> drift_;
 };

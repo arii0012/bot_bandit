@@ -1,4 +1,6 @@
 #include "Application.hpp"
+#include <algorithm>
+#include <cstdio>
 #include "Config.hpp"
 #include "Graphics/AssetManager.hpp"
 #include "UI/UISystem.hpp"
@@ -10,6 +12,8 @@
 #include "Systems/GameSystems.hpp"
 #include "Smartphone/Smartphone.hpp"
 #include "Systems/Weather.hpp"
+#include "Vehicles/DriftPhysics.hpp"
+#include "Vehicles/CarCustomizer.hpp"
 #include <cmath>
 
 Application::Application() {
@@ -30,6 +34,7 @@ Application::Application() {
   systems_ = std::make_unique<GameSystems>(this);
   phone_ = std::make_unique<Smartphone>(this);
   weather_ = std::make_unique<WeatherSystem>();
+  drift_ = std::make_unique<DriftPhysics>();
 
   if (saves_->Exists()) {
     saves_->Load(*player_, *world_);
@@ -99,6 +104,23 @@ void Application::Update() {
     if (IsKeyPressed(KEY_TAB)) ui_->ToggleRadial();
     ui_->Update(dt_);
     if (phone_) phone_->Update(dt_);
+    if (player_->Inv().materials["drift_mode"] > 0 && drift_) {
+      bool a = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP);
+      bool b = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
+      bool l = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
+      bool r = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT);
+      bool hb = IsKeyDown(KEY_SPACE);
+      bool nit = IsKeyDown(KEY_LEFT_SHIFT);
+      float trac = weather_ ? weather_->TractionMult() : 1.f;
+      drift_->SetTuning(player_->engineLvl_, player_->turboLvl_, trac);
+      int comp = player_->Inv().materials.count("tire_compound") ? player_->Inv().materials["tire_compound"] : 1;
+      drift_->Tires().SetCompound(comp);
+      drift_->Update(dt_, a, b, l, r, hb, nit);
+      if (IsKeyPressed(KEY_F)) {
+        player_->Inv().materials["drift_mode"] = 0;
+        ui_->Toast("Дрифт выключен");
+      }
+    }
     if (IsKeyPressed(KEY_P) && phone_) {
       if (phone_->IsOpen()) phone_->Close(); else phone_->Open();
     }
@@ -118,7 +140,22 @@ void Application::Draw() {
   world_->Draw(screenW_, screenH_);
   if (weather_) weather_->Draw(screenW_, screenH_);
   player_->Draw(screenW_ * 0.5f, screenH_ * 0.50f);
-  player_->DrawCar(screenW_ * 0.5f, screenH_ * 0.72f);
+  if (player_->Inv().materials["drift_mode"] > 0 && drift_) {
+    auto& vis = CarCustomizer::Visual(*player_);
+    Color body = {vis.r, vis.g, vis.b, 255};
+    // center drift on screen
+    float dx = drift_->State().x, dy = drift_->State().y;
+    if (dx == 0 && dy == 0) drift_->Reset(screenW_ * 0.5f, screenH_ * 0.65f, 0);
+    if (exhaust_) exhaust_->Draw();
+    drift_->Draw(0, 0, body, vis.neon || player_->neonCar_);
+    char dbuf[64];
+    snprintf(dbuf, sizeof(dbuf), "SPD %.0f  SLIP %.0f%%  NITRO %.1f  TIRE %.0fC wear%.0f%%",
+      fabsf(drift_->State().speed), drift_->State().slip * 100.f, drift_->State().nitroFuel,
+      drift_->Tires().P().temp, drift_->Tires().P().wear * 100.f);
+    DrawText(dbuf, 24, screenH_ - 56, 18, Config::ColGold());
+  } else {
+    player_->DrawCar(screenW_ * 0.5f, screenH_ * 0.72f);
+  }
 
   DrawHUD();
   ui_->Draw();

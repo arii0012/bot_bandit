@@ -35,13 +35,19 @@ set(SOURCES
   src/Core/Application.cpp
   src/Graphics/AssetManager.cpp
   src/Graphics/ProceduralAssetBuilder.cpp
+  src/Graphics/ExhaustParticles.cpp
   src/UI/UISystem.cpp
+  src/UI/InventoryUI.cpp
   src/Character/Character.cpp
   src/Character/CharacterCreator.cpp
   src/World/City.cpp
   src/World/World.cpp
   src/Vehicles/Vehicle.cpp
   src/Vehicles/Garage.cpp
+  src/Vehicles/CarCustomizer.cpp
+  src/Vehicles/DriftPhysics.cpp
+  src/Vehicles/Auction.cpp
+  src/Vehicles/TirePhysics.cpp
   src/Cutscenes/CutsceneSystem.cpp
   src/DevConsole/DevConsole.cpp
   src/SaveSystem/SaveSystem.cpp
@@ -49,6 +55,7 @@ set(SOURCES
   src/Systems/Crafting.cpp
   src/Systems/Weather.cpp
   src/Systems/Business.cpp
+  src/Systems/EngineAudio.cpp
   src/Smartphone/Smartphone.cpp
   src/Minigames/Fighting.cpp
   src/Systems/SmartHome.cpp

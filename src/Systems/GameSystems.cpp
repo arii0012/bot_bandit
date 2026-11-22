@@ -13,6 +13,8 @@
 #include "Minigames/Racing.hpp"
 #include "Minigames/DJ.hpp"
 #include "SmartHome.hpp"
+#include "Vehicles/CarCustomizer.hpp"
+#include "Vehicles/Auction.hpp"
 #include "Systems/Weather.hpp"
 #include <cstdlib>
 #include <ctime>
@@ -423,4 +425,74 @@ void GameSystems::DoAutopilotTravel() {
     app_->UI()->Toast("Автопилот: " + list[i].name);
     if (app_->Cutscenes()) app_->Cutscenes()->Play("travel");
   });
+}
+
+void GameSystems::OpenCarCustom() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->ActiveCar().empty()) { ui->Toast("Сначала купи/выбери авто (8)"); return; }
+  ui->Modal("КАСТОМ АВТО", {
+    "Покраска мат (45к)",
+    "Металлик (75к)",
+    "Хамелеон (150к)",
+    "Неон (80к)",
+    "Спойлер (55к)",
+    "Диски (40к)",
+    "Винил (60к)",
+    "Подвеска (90к)",
+    "Ксенон (35к)",
+    "Номер (15к)",
+    "Шины Soft (95к)",
+    "Шины Medium (70к)",
+    "Шины Hard (55к)",
+    "Обвес bodykit (180к)",
+    "Отмена"
+  }, [this](int i) {
+    const char* opts[] = {"paint_mat","paint_metal","paint_chameleon","neon","spoiler","wheels","vinyl","suspension","xenon","plate","tires_soft","tires_med","tires_hard","bodykit"};
+    if (i < 0 || i > 13) return;
+    std::string msg;
+    CarCustomizer::Apply(*app_->Player(), opts[i], msg);
+    app_->UI()->Toast(msg);
+  });
+}
+
+void GameSystems::StartDriftMode() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->ActiveCar().empty()) { ui->Toast("Нужна машина"); return; }
+  ui->Toast("ДРИФТ: WASD/стрелки газ-поворот, SPACE ручник, SHIFT nitro, F выход");
+  // flag via materials
+  p->Inv().materials["drift_mode"] = 1;
+}
+
+void GameSystems::OpenAuction() {
+  auto lots = CarAuction::CurrentLots();
+  std::vector<std::string> opts;
+  for (auto& L : lots)
+    opts.push_back(L.name + " — " + std::to_string(L.price) + "р");
+  opts.push_back("Отмена");
+  app_->UI()->Modal("АУКЦИОН КОНТЕЙНЕРОВ", opts, [this, n=(int)lots.size()](int i) {
+    if (i < 0 || i >= n) return;
+    app_->UI()->Toast(CarAuction::BuyLot(*app_->Player(), i));
+  });
+}
+
+void GameSystems::RepairProject() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  for (auto& it : p->Inv().items) {
+    if (it.rfind("project:", 0) != 0) continue;
+    std::string id = it.substr(8);
+    int cost = p->Inv().materials["repair_" + id];
+    if (cost <= 0) cost = 200000;
+    if (p->Money() < cost) { ui->Toast("Ремонт: " + std::to_string(cost)); return; }
+    p->AddMoney(-cost);
+    p->Inv().cars.push_back("Restored " + id);
+    p->SetActiveCar("Restored " + id);
+    p->Inv().materials["repair_" + id] = 0;
+    ui->Toast("Реставрация готова!");
+    if (app_->Cutscenes()) app_->Cutscenes()->Play("keys");
+    return;
+  }
+  ui->Toast("Нет проектных авто (сначала аукцион)");
 }

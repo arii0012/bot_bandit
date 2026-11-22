@@ -29,6 +29,10 @@ public:
   void OpenStudio();
   void BuyMansion();
   void DoAutopilotTravel();
+  void OpenCarCustom();
+  void StartDriftMode();
+  void OpenAuction();
+  void RepairProject();
 
 private:
   Application* app_;
