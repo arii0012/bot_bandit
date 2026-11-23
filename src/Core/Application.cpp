@@ -1,5 +1,9 @@
 #include "Application.hpp"
 #include "Core/FontUI.hpp"
+#include "MainMenu.hpp"
+#include "CustomCursor.hpp"
+#include "Garage3D.hpp"
+#include "Mechanics20.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -26,8 +30,8 @@ Application::Application() {
   InitWindowBorderless();
   SetTargetFPS(Config::TARGET_FPS);
   SetExitKey(0);
-  ShowCursor();
   FontUI::Get().Init();
+  HideCursor();
 
   assets_ = std::make_unique<AssetManager>();
   assets_->LoadAll("assets");
@@ -47,13 +51,20 @@ Application::Application() {
   exhaust_ = std::make_unique<ExhaustParticles>();
   shaders_ = std::make_unique<Shaders3D>();
   shaders_->Init();
+  mainMenu_ = std::make_unique<MainMenu>();
+  cursor_ = std::make_unique<CustomCursor>();
+  garage3d_ = std::make_unique<Garage3D>();
+  mech20_ = std::make_unique<Mechanics20>();
+  cursor_->Init();
+  mainMenu_->Open(saves_->Exists());
+  if (saves_->Exists()) state_ = AppState::MainMenu;
+  else state_ = AppState::MainMenu;
 
   if (saves_->Exists()) {
-    saves_->Load(*player_, *world_);
-    state_ = AppState::Playing;
-  } else {
-    state_ = AppState::CharacterCreate;
+    // keep save for Continue
   }
+  state_ = AppState::MainMenu;
+  if (mainMenu_) mainMenu_->Open(saves_->Exists());
 }
 
 Application::~Application() {
@@ -67,19 +78,20 @@ Application::~Application() {
 }
 
 void Application::InitWindowBorderless() {
-  SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
+  SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_ALWAYS_RUN);
   int mon = GetCurrentMonitor();
+  if (mon < 0) mon = 0;
   screenW_ = GetMonitorWidth(mon);
   screenH_ = GetMonitorHeight(mon);
+  if (screenW_ < 800) screenW_ = GetMonitorWidth(0);
+  if (screenH_ < 600) screenH_ = GetMonitorHeight(0);
   if (screenW_ < 800) screenW_ = 1280;
   if (screenH_ < 600) screenH_ = 720;
   InitWindow(screenW_, screenH_, "BOT BANDIT: UNDERWORLD");
   SetWindowPosition(0, 0);
   SetWindowSize(screenW_, screenH_);
-  if (IsWindowReady()) {
-    // ensure covers full monitor
-    SetWindowState(FLAG_WINDOW_UNDECORATED);
-  }
+  SetWindowState(FLAG_WINDOW_UNDECORATED);
+  HideCursor();
 }
 
 void Application::Run() {
@@ -101,6 +113,31 @@ void Application::Update() {
 
   if (state_ == AppState::Console) {
     console_->Update();
+    return;
+  }
+
+  if (state_ == AppState::MainMenu && mainMenu_) {
+    auto act = mainMenu_->Update(dt_, *cursor_);
+    if (act == MainMenuAction::Continue) {
+      if (saves_->Exists()) {
+        saves_->Load(*player_, *world_);
+        state_ = AppState::Playing;
+        mainMenu_->Close();
+      }
+    } else if (act == MainMenuAction::NewGame) {
+      player_ = std::make_unique<Character>();
+      state_ = AppState::CharacterCreate;
+      mainMenu_->Close();
+    } else if (act == MainMenuAction::CharacterStudio) {
+      state_ = AppState::CharacterCreate;
+      mainMenu_->Close();
+    } else if (act == MainMenuAction::Garage3D) {
+      if (garage3d_) { garage3d_->Open(*player_); state_ = AppState::Playing; mainMenu_->Close(); }
+    } else if (act == MainMenuAction::Settings) {
+      if (ui_) ui_->Toast("Settings");
+    } else if (act == MainMenuAction::Exit) {
+      running_ = false;
+    }
     return;
   }
 
@@ -126,6 +163,16 @@ void Application::Update() {
   if (state_ == AppState::CharacterCreate) return;
 
   if (state_ == AppState::Playing) {
+    if (garage3d_ && garage3d_->IsOpen()) {
+      garage3d_->Update(dt_, *player_);
+      return;
+    }
+    if (IsKeyPressed(KEY_G) && garage3d_) garage3d_->Open(*player_);
+    if (mech20_) {
+      mech20_->NeedsTick(*player_, dt_);
+      auto s = mech20_->MiningTick(*player_, dt_);
+      if (!s.empty() && ui_) ui_->Toast(s);
+    }
     systems_->Update(dt_);
     player_->Update(dt_);
     world_->Update(dt_);
@@ -198,11 +245,22 @@ void Application::Update() {
 void Application::Draw() {
   DrawRectangle(0, 0, screenW_, screenH_, Config::ColBG());
 
+  if (state_ == AppState::MainMenu && mainMenu_) {
+    mainMenu_->Draw();
+    if (cursor_) cursor_->Draw();
+    return;
+  }
   if (state_ == AppState::CharacterCreate) {
     ui_->DrawCharacterCreator();
+    if (cursor_) { cursor_->Update(dt_); cursor_->Draw(); }
     return;
   }
 
+  if (garage3d_ && garage3d_->IsOpen()) {
+    garage3d_->Draw(*player_);
+    if (cursor_) cursor_->Draw();
+    return;
+  }
   world_->Draw(screenW_, screenH_);
   if (weather_) weather_->Draw(screenW_, screenH_);
 
@@ -235,11 +293,7 @@ void Application::Draw() {
   if (state_ == AppState::Pause) DrawPauseMenu();
   if (state_ == AppState::Console) console_->Draw();
 
-  Vector2 m = GetMousePosition();
-  DrawCircleV(m, 6.f, WHITE);
-  DrawCircleV(m, 4.f, Config::ColAccent());
-  DrawCircleLines((int)m.x, (int)m.y, 14.f, WHITE);
-  DrawCircleLines((int)m.x, (int)m.y, 12.f, Config::ColAccent());
+  if (cursor_) { cursor_->Update(0); cursor_->Draw(); }
 }
 
 void Application::DrawHUD() {

@@ -18,9 +18,14 @@ class InventoryUI;
 class EngineAudio;
 class ExhaustParticles;
 class Shaders3D;
+class MainMenu;
+class CustomCursor;
+class Garage3D;
+class Mechanics20;
 
 enum class AppState {
   Boot,
+  MainMenu,
   CharacterCreate,
   Playing,
   Pause,
@@ -82,4 +87,8 @@ private:
   std::unique_ptr<EngineAudio> engineAudio_;
   std::unique_ptr<ExhaustParticles> exhaust_;
   std::unique_ptr<Shaders3D> shaders_;
+  std::unique_ptr<MainMenu> mainMenu_;
+  std::unique_ptr<CustomCursor> cursor_;
+  std::unique_ptr<Garage3D> garage3d_;
+  std::unique_ptr<Mechanics20> mech20_;
 };

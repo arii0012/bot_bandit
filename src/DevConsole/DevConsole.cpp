@@ -142,6 +142,9 @@ void DevConsole::Execute(const std::string& line) {
     app_->Systems()->OpenAuction();
   } else if (cmd == "/repair") {
     app_->Systems()->RepairProject();
+  } else if (cmd == "/garage") {
+    // opened via G in game
+    Print("Use G in game for 3D garage");
   } else if (cmd == "/exit") {
     app_->RequestExit();
   } else {
