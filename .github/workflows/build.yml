@@ -21,6 +21,19 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Optional Blender GLB generation
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          if (Test-Path tools/generate_blender_assets.py) {
+            choco install blender -y --no-progress
+            $blender = Get-ChildItem -Path "C:\Program Files\Blender Foundation" -Recurse -Filter blender.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($blender) {
+              New-Item -ItemType Directory -Force -Path assets/models | Out-Null
+              & $blender.FullName --background --python tools/generate_blender_assets.py
+            }
+          }
+
       - name: Configure
         run: |
           choco install ninja -y --no-progress
@@ -49,8 +62,7 @@ jobs:
           path: BotBandit-Windows-x64.zip
           retention-days: 14
 
-      - name: Upload Setup exe
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: LifeSim3D-Setup
           path: stage/LifeSim3D_Setup.exe
@@ -67,7 +79,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build \
             libasound2-dev libx11-dev libxrandr-dev libxi-dev \
-            libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
+            libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev \
+            python3
+
+      - name: Optional Blender GLB generation
+        continue-on-error: true
+        run: |
+          if [ -f tools/generate_blender_assets.py ]; then
+            sudo apt-get install -y blender || true
+            mkdir -p assets/models
+            if command -v blender >/dev/null 2>&1; then
+              blender --background --python tools/generate_blender_assets.py || true
+            fi
+          fi
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja

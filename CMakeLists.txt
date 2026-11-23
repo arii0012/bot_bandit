@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(BotBanditUnderworld VERSION 1.0.0 LANGUAGES C CXX)
+project(BotBanditUnderworld VERSION 1.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -86,6 +86,7 @@ target_include_directories(botbandit PRIVATE
 )
 
 target_link_libraries(botbandit PRIVATE raylib nlohmann_json::nlohmann_json)
+target_compile_features(botbandit PRIVATE cxx_std_20)
 
 if(MSVC)
   target_compile_options(botbandit PRIVATE /W3 /permissive- /utf-8 /EHsc)
@@ -123,6 +124,6 @@ if(WIN32)
   add_custom_command(TARGET LifeSim3D_Setup POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:LifeSim3D_Setup>/assets
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:LifeSim3D_Setup>/assets
-    COMMENT "Copy assets for installer UI"
+    COMMENT "Copy assets for installer"
   )
 endif()
