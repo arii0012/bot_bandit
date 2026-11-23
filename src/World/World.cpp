@@ -106,7 +106,7 @@ void World::DrawBuildings(int sw, int sh) {
       roof);
 
     // front face
-    Color front = {28 + (b.seed % 12), 28, 36, 255};
+    Color front = {(unsigned char)(28 + (b.seed % 12)), 28, 36, 255};
     DrawRectangle((int)x, by, bw, bh, front);
 
     // windows grid with night glow

@@ -6,6 +6,8 @@
 #include "World/City.hpp"
 #include "Systems/Weather.hpp"
 #include "Systems/GameSystems.hpp"
+#include "SaveSystem/SaveSystem.hpp"
+#include "Cutscenes/CutsceneSystem.hpp"
 #include <sstream>
 #include <algorithm>
 
