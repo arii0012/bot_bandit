@@ -1,4 +1,5 @@
 #include "InventoryUI.hpp"
+#include "Core/FontUI.hpp"
 #include <algorithm>
 #include "Core/Application.hpp"
 #include "UI/UISystem.hpp"
@@ -55,8 +56,8 @@ void InventoryUI::UseSelected() {
 void InventoryUI::DrawTab(Rectangle r, int id, const char* name) {
   bool on = tab_ == id;
   DrawRectangleRounded(r, 0.2f, 6, on ? Config::ColAccent() : Config::ColBtn());
-  int tw = MeasureText(name, 16);
-  DrawText(name, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + 8), 16, Config::ColText());
+  int tw = FontUI::Get().Measure(name, 16);
+  DrawTextRu(name, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + 8), 16, Config::ColText());
   if (CheckCollisionPointRec(GetMousePosition(), r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
     tab_ = id; selected_ = 0;
   }
@@ -69,8 +70,8 @@ void InventoryUI::Draw(int sw, int sh) {
   float x = (sw - w) * 0.5f, y = (sh - h) * 0.5f;
   DrawRectangleRounded({x, y, w, h}, 0.08f, 10, Config::ColPanel2());
   DrawRectangleRoundedLines({x, y, w, h}, 0.08f, 10, Config::ColAccent());
-  DrawText("ИНВЕНТАРЬ", (int)x + 20, (int)y + 14, 24, Config::ColText());
-  DrawText("A/D вкладки  W/S выбор  E использовать  I закрыть", (int)x + 20, (int)y + 42, 14, Config::ColMuted());
+  DrawTextRu("ИНВЕНТАРЬ", (int)x + 20, (int)y + 14, 24, Config::ColText());
+  DrawTextRu("A/D вкладки  W/S выбор  E использовать  I закрыть", (int)x + 20, (int)y + 42, 14, Config::ColMuted());
 
   const char* tabs[] = {"Вещи", "Оружие", "Авто", "Мат-лы", "Одежда"};
   for (int i = 0; i < 5; ++i)
@@ -105,7 +106,7 @@ void InventoryUI::Draw(int sw, int sh) {
   float listY = y + 110;
   DrawRectangleRounded({x + 16, listY, w - 32, h - 130}, 0.06f, 8, Config::ColPanel());
   if (lines.empty()) {
-    DrawText("Пусто", (int)x + 30, (int)listY + 20, 18, Config::ColMuted());
+    DrawTextRu("Пусто", (int)x + 30, (int)listY + 20, 18, Config::ColMuted());
   } else {
     int maxShow = 12;
     int start = std::max(0, selected_ - maxShow + 1);
@@ -113,7 +114,7 @@ void InventoryUI::Draw(int sw, int sh) {
       float ly = listY + 10 + (i - start) * 26;
       if (i == selected_)
         DrawRectangleRounded({x + 22, ly - 2, w - 44, 24}, 0.2f, 4, Fade(Config::ColAccent(), 0.35f));
-      DrawText(lines[i].c_str(), (int)x + 30, (int)ly, 18, Config::ColText());
+      DrawTextRu(lines[i].c_str(), (int)x + 30, (int)ly, 18, Config::ColText());
       Rectangle row = {x + 22, ly - 2, w - 44, 24};
       if (CheckCollisionPointRec(GetMousePosition(), row) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         selected_ = i;

@@ -1,4 +1,5 @@
 #include "DevConsole.hpp"
+#include "Core/FontUI.hpp"
 #include "Core/Application.hpp"
 #include "Core/Config.hpp"
 #include "Character/Character.hpp"
@@ -156,8 +157,8 @@ void DevConsole::Draw() {
 
   int y = 8;
   for (size_t i = 0; i < log_.size(); ++i) {
-    DrawText(log_[i].c_str(), 12, y, 16, Config::ColText());
+    DrawTextRu(log_[i].c_str(), 12, y, 16, Config::ColText());
     y += 18;
   }
-  DrawText(("> " + input_ + "_").c_str(), 12, (int)h - 28, 18, Config::ColGold());
+  DrawTextRu(("> " + input_ + "_").c_str(), 12, (int)h - 28, 18, Config::ColGold());
 }

@@ -1,4 +1,5 @@
 #include "CutsceneSystem.hpp"
+#include "Core/FontUI.hpp"
 #include "raylib.h"
 #include <cmath>
 
@@ -93,7 +94,7 @@ void CutsceneSystem::Draw(int sw, int sh) {
 
   if (!currentText_.empty()) {
     int tw = MeasureText(currentText_.c_str(), 26);
-    DrawText(currentText_.c_str(), (sw - tw) / 2, sh - bar + 20, 26, WHITE);
+    DrawTextRu(currentText_.c_str(), (sw - tw) / 2, sh - bar + 20, 26, WHITE);
   }
   // progress
   float p = Progress();

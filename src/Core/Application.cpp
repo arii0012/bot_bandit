@@ -1,4 +1,5 @@
 #include "Application.hpp"
+#include "Core/FontUI.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <cmath>
@@ -25,7 +26,8 @@ Application::Application() {
   InitWindowBorderless();
   SetTargetFPS(Config::TARGET_FPS);
   SetExitKey(0);
-  HideCursor();
+  ShowCursor();
+  FontUI::Get().Init();
 
   assets_ = std::make_unique<AssetManager>();
   assets_->LoadAll("assets");
@@ -60,11 +62,12 @@ Application::~Application() {
   }
   if (shaders_) shaders_->Shutdown();
   if (engineAudio_) engineAudio_->Stop();
+  FontUI::Get().Shutdown();
   CloseWindow();
 }
 
 void Application::InitWindowBorderless() {
-  SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
+  SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_TOPMOST | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
   int mon = GetCurrentMonitor();
   screenW_ = GetMonitorWidth(mon);
   screenH_ = GetMonitorHeight(mon);
@@ -72,6 +75,11 @@ void Application::InitWindowBorderless() {
   if (screenH_ < 600) screenH_ = 720;
   InitWindow(screenW_, screenH_, "BOT BANDIT: UNDERWORLD");
   SetWindowPosition(0, 0);
+  SetWindowSize(screenW_, screenH_);
+  if (IsWindowReady()) {
+    // ensure covers full monitor
+    SetWindowState(FLAG_WINDOW_UNDECORATED);
+  }
 }
 
 void Application::Run() {
@@ -203,7 +211,7 @@ void Application::Draw() {
     snprintf(dbuf, sizeof(dbuf), "SPD %.0f  SLIP %.0f%%  NITRO %.1f  TIRE %.0fC wear%.0f%%",
              fabsf(drift_->State().speed), drift_->State().slip * 100.f, drift_->State().nitroFuel,
              drift_->Tires().P().temp, drift_->Tires().P().wear * 100.f);
-    DrawText(dbuf, 24, screenH_ - 56, 18, Config::ColGold());
+    DrawTextRu(dbuf, 24, screenH_ - 56, 18, Config::ColGold());
   } else {
     player_->DrawCar(screenW_ * 0.5f, screenH_ * 0.72f);
   }
@@ -218,8 +226,10 @@ void Application::Draw() {
   if (state_ == AppState::Console) console_->Draw();
 
   Vector2 m = GetMousePosition();
+  DrawCircleV(m, 6.f, WHITE);
   DrawCircleV(m, 4.f, Config::ColAccent());
-  DrawCircleLines((int)m.x, (int)m.y, 10.f, Config::ColText());
+  DrawCircleLines((int)m.x, (int)m.y, 14.f, WHITE);
+  DrawCircleLines((int)m.x, (int)m.y, 12.f, Config::ColAccent());
 }
 
 void Application::DrawHUD() {
@@ -234,11 +244,11 @@ void Application::DrawHUD() {
   snprintf(buf, sizeof(buf), "%s  |  $%lld  |  LVL %d  |  EN %d  |  HP %.0f  |  Heat %d  |  %s",
            p.Name().c_str(), (long long)p.Money(), p.Level(), p.Energy(), bd.hp,
            p.Heat(), world_->CurrentCityName().c_str());
-  DrawText(buf, (int)(pad + 14), (int)(pad + 14), 20, Config::ColText());
+  DrawTextRu(buf, (int)(pad + 14), (int)(pad + 14), 20, Config::ColText());
 
   const char* hints =
       "[1-9] Actions  [I] Inv  [P] Phone  [Tab] Menu  [~] Console  [Esc] Pause";
-  DrawText(hints, (int)pad, screenH_ - 28, 16, Config::ColMuted());
+  DrawTextRu(hints, (int)pad, screenH_ - 28, 16, Config::ColMuted());
 }
 
 void Application::DrawPauseMenu() {
@@ -248,7 +258,7 @@ void Application::DrawPauseMenu() {
   Rectangle panel = {x, y, w, h};
   DrawRectangleRounded(panel, 0.12f, 10, Config::ColPanel2());
   DrawRectangleRoundedLines(panel, 0.12f, 10, Config::ColAccent());
-  DrawText("PAUSE", (int)(x + 120), (int)(y + 30), 32, Config::ColText());
+  DrawTextRu("PAUSE", (int)(x + 120), (int)(y + 30), 32, Config::ColText());
 
   auto btn = [&](const char* label, float by, bool& hover) -> bool {
     Rectangle r = {x + 40, y + by, w - 80, 44};
@@ -257,7 +267,7 @@ void Application::DrawPauseMenu() {
     DrawRectangleRounded(r, 0.2f, 8, hover ? Config::ColBtnHover() : Config::ColBtn());
     DrawRectangleRoundedLines(r, 0.2f, 8, Config::ColAccent());
     int tw = MeasureText(label, 20);
-    DrawText(label, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + 12), 20, Config::ColText());
+    DrawTextRu(label, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + 12), 20, Config::ColText());
     return hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
   };
 

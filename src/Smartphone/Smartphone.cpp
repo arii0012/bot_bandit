@@ -1,4 +1,5 @@
 #include "Smartphone.hpp"
+#include "Core/FontUI.hpp"
 #include <algorithm>
 #include "Core/Application.hpp"
 #include "Core/Config.hpp"
@@ -31,8 +32,8 @@ bool Smartphone::AppButton(Rectangle r, const char* label, Color accent) {
   bool h = CheckCollisionPointRec(m, r);
   DrawRectangleRounded(r, 0.2f, 6, h ? Color{60, 60, 70, 255} : Color{40, 40, 48, 255});
   DrawRectangleRoundedLines(r, 0.2f, 6, accent);
-  int tw = MeasureText(label, 16);
-  DrawText(label, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + r.height * 0.5f - 8), 16, WHITE);
+  int tw = FontUI::Get().Measure(label, 16);
+  DrawTextRu(label, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + r.height * 0.5f - 8), 16, WHITE);
   return h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 }
 
@@ -44,7 +45,7 @@ void Smartphone::DrawFrame(Rectangle phone) {
 }
 
 void Smartphone::DrawHome(Rectangle c) {
-  DrawText("BOT PHONE", (int)(c.x + 16), (int)(c.y + 8), 18, Config::ColGold());
+  DrawTextRu("BOT PHONE", (int)(c.x + 16), (int)(c.y + 8), 18, Config::ColGold());
   const char* names[] = {"Банк", "Крипта", "DarkNet", "Соцсеть", "Такси", "Музыка"};
   PhoneApp apps[] = {PhoneApp::Bank, PhoneApp::Crypto, PhoneApp::DarkNet, PhoneApp::Social, PhoneApp::Taxi, PhoneApp::Music};
   for (int i = 0; i < 6; ++i) {
@@ -57,10 +58,10 @@ void Smartphone::DrawHome(Rectangle c) {
 
 void Smartphone::DrawBank(Rectangle c) {
   auto* p = app_->Player();
-  DrawText("БАНК", (int)c.x + 16, (int)c.y + 8, 20, Config::ColText());
+  DrawTextRu("БАНК", (int)c.x + 16, (int)c.y + 8, 20, Config::ColText());
   char buf[64];
   snprintf(buf, sizeof(buf), "Баланс: %lld руб.", (long long)p->Money());
-  DrawText(buf, (int)c.x + 16, (int)c.y + 40, 18, Config::ColGold());
+  DrawTextRu(buf, (int)c.x + 16, (int)c.y + 40, 18, Config::ColGold());
   if (AppButton({c.x + 16, c.y + 80, c.width - 32, 40}, "Вклад +5% (10к)", Config::ColSuccess())) {
     if (p->Money() >= 10000) {
       p->AddMoney(-10000);
@@ -78,13 +79,13 @@ void Smartphone::DrawBank(Rectangle c) {
 
 void Smartphone::DrawCrypto(Rectangle c) {
   auto* p = app_->Player();
-  DrawText("КРИПТО", (int)c.x + 16, (int)c.y + 8, 20, Config::ColText());
+  DrawTextRu("КРИПТО", (int)c.x + 16, (int)c.y + 8, 20, Config::ColText());
   static float btc = 94000.f, eth = 3500.f;
   btc += (rand() % 200 - 100) * 0.5f;
   eth += (rand() % 40 - 20) * 0.2f;
   char buf[80];
   snprintf(buf, sizeof(buf), "BTC ~$%.0f  ETH ~$%.0f", btc, eth);
-  DrawText(buf, (int)c.x + 16, (int)c.y + 40, 16, Config::ColMuted());
+  DrawTextRu(buf, (int)c.x + 16, (int)c.y + 40, 16, Config::ColMuted());
   if (AppButton({c.x + 16, c.y + 80, c.width - 32, 40}, "Купить BTC (на 20к)", Config::ColAccent())) {
     if (p->Money() >= 20000) {
       p->AddMoney(-20000);
@@ -108,10 +109,10 @@ void Smartphone::DrawCrypto(Rectangle c) {
 void Smartphone::DrawDarkNet(Rectangle c) {
   auto* p = app_->Player();
   auto* city = app_->GetWorld()->Current();
-  DrawText("DARKNET", (int)c.x + 16, (int)c.y + 8, 20, Config::ColDanger());
+  DrawTextRu("DARKNET", (int)c.x + 16, (int)c.y + 8, 20, Config::ColDanger());
   bool allowed = city && (city->id == "москва" || city->id == "питер" || city->id == "владивосток");
   if (!allowed) {
-    DrawText("Доступно: Москва, Питер, Владивосток", (int)c.x + 12, (int)c.y + 50, 14, Config::ColMuted());
+    DrawTextRu("Доступно: Москва, Питер, Владивосток", (int)c.x + 12, (int)c.y + 50, 14, Config::ColMuted());
   } else {
     if (AppButton({c.x + 16, c.y + 50, c.width - 32, 40}, "Документы (-2★) 85к", Config::ColAccent())) {
       if (p->Money() >= 85000) {
@@ -141,8 +142,8 @@ void Smartphone::DrawDarkNet(Rectangle c) {
 }
 
 void Smartphone::DrawSocial(Rectangle c) {
-  DrawText("ЛЕНТА", (int)c.x + 16, (int)c.y + 8, 20, Config::ColText());
-  DrawText("Подписчики зависят от тачки\nи одежды в кадре.", (int)c.x + 16, (int)c.y + 40, 16, Config::ColMuted());
+  DrawTextRu("ЛЕНТА", (int)c.x + 16, (int)c.y + 8, 20, Config::ColText());
+  DrawTextRu("Подписчики зависят от тачки\nи одежды в кадре.", (int)c.x + 16, (int)c.y + 40, 16, Config::ColMuted());
   if (AppButton({c.x + 16, c.y + 100, c.width - 32, 40}, "Пост (фото)", Config::ColAccent())) {
     auto* p = app_->Player();
     int bonus = 500 + (int)p->Inv().cars.size() * 800 + p->Level() * 100;
@@ -154,8 +155,8 @@ void Smartphone::DrawSocial(Rectangle c) {
 }
 
 void Smartphone::DrawTaxi(Rectangle c) {
-  DrawText("ТАКСИ / АВТОПИЛОТ", (int)c.x + 16, (int)c.y + 8, 18, Config::ColText());
-  DrawText("Быстрый трансфер по городу", (int)c.x + 16, (int)c.y + 40, 14, Config::ColMuted());
+  DrawTextRu("ТАКСИ / АВТОПИЛОТ", (int)c.x + 16, (int)c.y + 8, 18, Config::ColText());
+  DrawTextRu("Быстрый трансфер по городу", (int)c.x + 16, (int)c.y + 40, 14, Config::ColMuted());
   if (AppButton({c.x + 16, c.y + 80, c.width - 32, 40}, "Вызвать (1500)", Config::ColAccent())) {
     auto* p = app_->Player();
     if (p->Money() >= 1500) {
@@ -188,7 +189,7 @@ void Smartphone::Draw(int sw, int sh) {
     case PhoneApp::Social: DrawSocial(content); break;
     case PhoneApp::Taxi: DrawTaxi(content); break;
     case PhoneApp::Music:
-      DrawText("Плеер: BGM", (int)content.x + 16, (int)content.y + 40, 18, Config::ColText());
+      DrawTextRu("Плеер: BGM", (int)content.x + 16, (int)content.y + 40, 18, Config::ColText());
       if (AppButton({content.x + 16, content.y + content.height - 50, content.width - 32, 36}, "Назад", Config::ColMuted()))
         currentApp_ = PhoneApp::Home;
       break;
@@ -196,6 +197,6 @@ void Smartphone::Draw(int sw, int sh) {
   }
 
   if (statusTimer_ > 0) {
-    DrawText(statusMsg_.c_str(), (int)(px + 20), (int)(py + ph - 36), 14, Config::ColGold());
+    DrawTextRu(statusMsg_.c_str(), (int)(px + 20), (int)(py + ph - 36), 14, Config::ColGold());
   }
 }

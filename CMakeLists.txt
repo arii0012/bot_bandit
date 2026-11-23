@@ -33,6 +33,7 @@ FetchContent_MakeAvailable(json)
 set(SOURCES
   src/main.cpp
   src/Core/Application.cpp
+  src/Core/FontUI.cpp
   src/Graphics/AssetManager.cpp
   src/Graphics/ProceduralAssetBuilder.cpp
   src/Graphics/ExhaustParticles.cpp

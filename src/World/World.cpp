@@ -1,4 +1,5 @@
 #include "World.hpp"
+#include "Core/FontUI.hpp"
 #include "Core/Config.hpp"
 #include <cmath>
 #include <cstdlib>
@@ -145,7 +146,7 @@ void World::Draw(int sw, int sh) {
   DrawGround(sw, sh);
   auto* c = Current();
   if (c) {
-    DrawText(c->name.c_str(), 24, sh * 2 / 3 + 20, 28, Config::ColText());
-    DrawText(c->desc.c_str(), 24, sh * 2 / 3 + 52, 18, Config::ColMuted());
+    DrawTextRu(c->name.c_str(), 24, sh * 2 / 3 + 20, 28, Config::ColText());
+    DrawTextRu(c->desc.c_str(), 24, sh * 2 / 3 + 52, 18, Config::ColMuted());
   }
 }

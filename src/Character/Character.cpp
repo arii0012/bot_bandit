@@ -1,4 +1,5 @@
 #include "Character.hpp"
+#include "Core/FontUI.hpp"
 #include "Core/Config.hpp"
 #include <cmath>
 #include <algorithm>
@@ -160,7 +161,7 @@ void Character::DrawCar(float x, float y) {
   if (neonCar_)
     DrawEllipse((int)x, (int)(y + h / 2 + 6), w / 2, 7, Fade(Color{0, 220, 255, 255}, 0.5f));
   if (turboLvl_ > 0)
-    DrawText("TURBO", (int)(x - 22), (int)(y - 42), 14, Color{244, 196, 48, 255});
+    DrawTextRu("TURBO", (int)(x - 22), (int)(y - 42), 14, Color{244, 196, 48, 255});
 }
 
 void Character::AddHeat(int h) {

@@ -1,4 +1,5 @@
 #include "UISystem.hpp"
+#include "Core/FontUI.hpp"
 #include "Core/Application.hpp"
 #include "Core/Config.hpp"
 #include "Character/Character.hpp"
@@ -53,8 +54,8 @@ void UISystem::DrawRoundedButton(Rectangle r, const char* label, bool& outHover,
   Color bg = accent ? Config::ColAccent() : (outHover ? Config::ColBtnHover() : Config::ColBtn());
   DrawRectangleRounded(r, 0.22f, 8, bg);
   DrawRectangleRoundedLines(r, 0.22f, 8, Config::ColAccent());
-  int tw = MeasureText(label, 18);
-  DrawText(label, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + r.height * 0.5f - 9), 18, Config::ColText());
+  int tw = FontUI::Get().Measure(label, 18);
+  DrawTextRu(label, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + r.height * 0.5f - 9), 18, Config::ColText());
 }
 
 void UISystem::Draw() {
@@ -62,11 +63,11 @@ void UISystem::Draw() {
 
   // toast
   if (toastTimer_ > 0) {
-    int tw = MeasureText(toastMsg_.c_str(), 20) + 40;
+    int tw = FontUI::Get().Measure(toastMsg_.c_str(), 20) + 40;
     Rectangle r = {(float)(sw - tw) * 0.5f, 80, (float)tw, 40};
     DrawRectangleRounded(r, 0.3f, 8, Config::ColPanel());
     DrawRectangleRoundedLines(r, 0.3f, 8, Config::ColGold());
-    DrawText(toastMsg_.c_str(), (int)(r.x + 20), (int)(r.y + 10), 20, Config::ColText());
+    DrawTextRu(toastMsg_.c_str(), (int)(r.x + 20), (int)(r.y + 10), 20, Config::ColText());
   }
 
   // radial
@@ -104,7 +105,7 @@ void UISystem::Draw() {
     float x = (sw - w) * 0.5f, y = (sh - h) * 0.5f;
     DrawRectangleRounded({x, y, w, h}, 0.1f, 10, Config::ColPanel2());
     DrawRectangleRoundedLines({x, y, w, h}, 0.1f, 10, Config::ColAccent());
-    DrawText(modalTitle_.c_str(), (int)(x + 20), (int)(y + 18), 22, Config::ColText());
+    DrawTextRu(modalTitle_.c_str(), (int)(x + 20), (int)(y + 18), 22, Config::ColText());
     for (size_t i = 0; i < modalOpts_.size(); ++i) {
       Rectangle r = {x + 30, y + 60 + i * 52, w - 60, 42};
       bool h = false;
@@ -144,8 +145,8 @@ void UISystem::DrawCharacterCreator() {
   p.Draw(cx, cy);
   p.DrawCar(cx, cy + 110);
 
-  DrawText("СТУДИЯ ПЕРСОНАЖА 360°", 40, 36, 28, Config::ColText());
-  DrawText("Тяни мышью по подиуму — поворот | Q/E — шаг", 40, 70, 16, Config::ColMuted());
+  DrawTextRu("СТУДИЯ ПЕРСОНАЖА 360°", 40, 36, 28, Config::ColText());
+  DrawTextRu("Тяни мышью по подиуму — поворот | Q/E — шаг", 40, 70, 16, Config::ColMuted());
 
   if (IsKeyDown(KEY_Q)) p.Facing() -= 0.04f;
   if (IsKeyDown(KEY_E)) p.Facing() += 0.04f;
@@ -157,14 +158,14 @@ void UISystem::DrawCharacterCreator() {
     return h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
   };
 
-  DrawText("Пол", (int)px, (int)py, 18, Config::ColMuted());
+  DrawTextRu("Пол", (int)px, (int)py, 18, Config::ColMuted());
   if (btn({px, py+22, 90, 36}, "Муж", !p.GenderFemale())) p.SetFemale(false);
   if (btn({px+100, py+22, 90, 36}, "Жен", p.GenderFemale())) p.SetFemale(true);
 
-  DrawText("Причёска", (int)px, (int)py+70, 18, Config::ColMuted());
+  DrawTextRu("Причёска", (int)px, (int)py+70, 18, Config::ColMuted());
   if (btn({px, py+92, 120, 36}, "Сменить", false)) p.SetHairStyle((p.HairStyle()+1)%8);
 
-  DrawText("Цвет волос", (int)px, (int)py+140, 18, Config::ColMuted());
+  DrawTextRu("Цвет волос", (int)px, (int)py+140, 18, Config::ColMuted());
   Color cols[] = {{30,25,20,255},{180,140,60,255},{20,20,25,255},{160,40,40,255},{200,200,210,255},{80,40,120,255}};
   for (int i = 0; i < 6; ++i) {
     Rectangle rc = {px + i*42.f, py+162, 34, 34};
@@ -173,7 +174,7 @@ void UISystem::DrawCharacterCreator() {
       p.SetHairColor(cols[i]);
   }
 
-  DrawText("Пресеты", (int)px, (int)py+210, 18, Config::ColMuted());
+  DrawTextRu("Пресеты", (int)px, (int)py+210, 18, Config::ColMuted());
   if (btn({px, py+232, 90, 32}, "Улица", false)) {
     p.SetFemale(false); p.SetHairStyle(2); p.SetHairColor({20,20,25,255});
   }
@@ -205,7 +206,7 @@ void UISystem::DrawCharacterCreator() {
   // angle indicator
   char abuf[32];
   snprintf(abuf, sizeof(abuf), "Угол: %.0f°", p.Facing() * 180.f / 3.14159f);
-  DrawText(abuf, (int)(cx - 40), (int)(cy + 150), 16, Config::ColMuted());
+  DrawTextRu(abuf, (int)(cx - 40), (int)(cy + 150), 16, Config::ColMuted());
 
   Rectangle start = {(float)sw * 0.5f - 110, (float)sh - 90, 220, 52};
   if (btn(start, "НАЧАТЬ ИГРУ", true) || IsKeyPressed(KEY_ENTER)) {
