@@ -4,6 +4,8 @@
 #include "Character/Character.hpp"
 #include "World/World.hpp"
 #include "Systems/GameSystems.hpp"
+#include "Smartphone/Smartphone.hpp"
+#include "Cutscenes/CutsceneSystem.hpp"
 #include <cmath>
 #include <cstdio>
 

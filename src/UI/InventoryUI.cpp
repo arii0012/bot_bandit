@@ -1,6 +1,7 @@
 #include "InventoryUI.hpp"
 #include <algorithm>
 #include "Core/Application.hpp"
+#include "UI/UISystem.hpp"
 #include "Core/Config.hpp"
 #include "Character/Character.hpp"
 #include "Systems/Damage.hpp"
