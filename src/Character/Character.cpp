@@ -65,8 +65,8 @@ void Character::Draw(float x, float y) {
   // shoes perspective
   DrawRectangleRounded({x - 13, y + 52, 12, 7}, 0.3f, 4, shoes);
   DrawRectangleRounded({x + 1, y + 52, 12, 7}, 0.3f, 4, shoes);
-  DrawRectangle({(int)(x - 13), (int)(y + 56), 12, 3}, Shade(shoes, 0.6f));
-  DrawRectangle({(int)(x + 1), (int)(y + 56), 12, 3}, Shade(shoes, 0.6f));
+  DrawRectangle((int)(x - 13), (int)(y + 56), 12, 3, Shade(shoes, 0.6f));
+  DrawRectangle((int)(x + 1), (int)(y + 56), 12, 3, Shade(shoes, 0.6f));
 
   // === TORSO 3D: left shade + right light ===
   float ty = y + breath;
