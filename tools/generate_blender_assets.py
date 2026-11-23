@@ -170,6 +170,7 @@ def build_character(char_id, female=False, hair_col=(0.1, 0.08, 0.06), shirt_col
         "Shoot": [(1, 0.5)],
         "Dance": [(1, 0.0), (12, 0.4), (24, -0.4), (36, 0.0)],
         "UsePhone": [(1, 0.25)],
+        "Arrested": [(1, 0.0), (15, 0.5), (30, 0.5)],
     }
 
     bpy.context.view_layer.objects.active = arm

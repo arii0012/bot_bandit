@@ -3,9 +3,9 @@
 #include <vector>
 #include <filesystem>
 #include <fstream>
-#include <cstring>
 #include <algorithm>
 #include <cstdio>
+#include <cctype>
 
 #if defined(_WIN32)
 #ifndef WIN32_LEAN_AND_MEAN
@@ -18,6 +18,7 @@
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "uuid.lib")
+#pragma comment(lib, "advapi32.lib")
 #endif
 
 namespace fs = std::filesystem;
@@ -64,6 +65,35 @@ static std::string DefaultDir() {
 }
 
 #if defined(_WIN32)
+static bool IsAdmin() {
+  BOOL admin = FALSE;
+  PSID group = nullptr;
+  SID_IDENTIFIER_AUTHORITY nt = SECURITY_NT_AUTHORITY;
+  if (AllocateAndInitializeSid(&nt, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS,
+                               0, 0, 0, 0, 0, 0, &group)) {
+    CheckTokenMembership(nullptr, group, &admin);
+    FreeSid(group);
+  }
+  return admin == TRUE;
+}
+
+static bool RelaunchElevated() {
+  char path[MAX_PATH];
+  if (!GetModuleFileNameA(nullptr, path, MAX_PATH)) return false;
+  SHELLEXECUTEINFOA sei{};
+  sei.cbSize = sizeof(sei);
+  sei.lpVerb = "runas";
+  sei.lpFile = path;
+  sei.nShow = SW_SHOWNORMAL;
+  return ShellExecuteExA(&sei) == TRUE;
+}
+
+static bool NeedsAdminPath(const std::string& p) {
+  std::string low = p;
+  for (char& c : low) c = (char)tolower((unsigned char)c);
+  return low.find("program files") != std::string::npos || low.find(":\\windows") != std::string::npos;
+}
+
 static std::string BrowseFolder() {
   char path[MAX_PATH] = {};
   BROWSEINFOA bi{};
@@ -131,6 +161,7 @@ int main() {
 #if defined(_WIN32)
   char mod[MAX_PATH];
   if (GetModuleFileNameA(nullptr, mod, MAX_PATH)) selfDir = fs::path(mod).parent_path();
+  status = IsAdmin() ? "Running as Administrator" : "User mode (OK for C:\\Games)";
 #endif
 
   while (!WindowShouldClose()) {
@@ -169,20 +200,29 @@ int main() {
       Checkbox({48, 260, 400, 28}, "Launch game after install", &launchAfter);
       DrawText(status.c_str(), 48, 320, 16, CMut());
       if (Btn({48, 400, 200, 48}, "Install", true)) {
-        queue.clear(); qi = 0;
-        for (const char* n : {"botbandit.exe", "botbandit"}) {
-          fs::path p = selfDir / n;
-          if (fs::exists(p)) queue.push_back(p);
-        }
-        Collect(selfDir / "assets", queue);
-        Collect(selfDir / "shaders", queue);
-        Collect(selfDir / "payload", queue);
-        if (queue.empty()) { phase = Phase::Fail; lastError = "No game files next to Setup"; }
-        else {
-          std::error_code ec;
-          fs::create_directories(pathEdit, ec);
-          phase = Phase::Installing;
-          status = "Installing...";
+#if defined(_WIN32)
+        if (NeedsAdminPath(pathEdit) && !IsAdmin()) {
+          status = "Requesting Administrator (UAC)...";
+          if (RelaunchElevated()) break;
+          status = "UAC denied — choose C:\\Games\\LifeSim3D";
+        } else
+#endif
+        {
+          queue.clear(); qi = 0;
+          for (const char* n : {"botbandit.exe", "botbandit"}) {
+            fs::path p = selfDir / n;
+            if (fs::exists(p)) queue.push_back(p);
+          }
+          Collect(selfDir / "assets", queue);
+          Collect(selfDir / "shaders", queue);
+          Collect(selfDir / "payload", queue);
+          if (queue.empty()) { phase = Phase::Fail; lastError = "No game files next to Setup"; }
+          else {
+            std::error_code ec;
+            fs::create_directories(pathEdit, ec);
+            phase = Phase::Installing;
+            status = "Installing...";
+          }
         }
       }
       if (Btn({270, 400, 160, 48}, "Cancel", false)) break;
