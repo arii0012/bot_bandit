@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(BotBanditUnderworld VERSION 1.0.0 LANGUAGES CXX)
+project(BotBanditUnderworld VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,7 +30,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-set(SOURCES
+set(GAME_SOURCES
   src/main.cpp
   src/Core/Application.cpp
   src/Core/FontUI.cpp
@@ -67,7 +67,7 @@ set(SOURCES
   src/Minigames/DJ.cpp
 )
 
-add_executable(botbandit ${SOURCES})
+add_executable(botbandit ${GAME_SOURCES})
 
 target_include_directories(botbandit PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -96,14 +96,32 @@ endif()
 
 if(WIN32)
   target_link_libraries(botbandit PRIVATE winmm)
+elseif(UNIX AND NOT APPLE)
+  find_package(X11 REQUIRED)
+  find_package(OpenGL REQUIRED)
+  target_link_libraries(botbandit PRIVATE ${X11_LIBRARIES} OpenGL::GL pthread dl m)
 endif()
 
 add_custom_command(TARGET botbandit POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:botbandit>/assets
+  COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:botbandit>/shaders
   COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:botbandit>/data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:botbandit>/assets
-  COMMENT "Copy assets next to binary"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:botbandit>/shaders
+  COMMENT "Copy assets and shaders"
 )
 
-install(TARGETS botbandit RUNTIME DESTINATION bin)
-install(DIRECTORY assets/ DESTINATION bin/assets)
+if(WIN32)
+  add_executable(LifeSim3D_Setup installer/setup_main.cpp)
+  target_include_directories(LifeSim3D_Setup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  target_link_libraries(LifeSim3D_Setup PRIVATE raylib winmm ole32 uuid shell32)
+  if(MSVC)
+    target_compile_options(LifeSim3D_Setup PRIVATE /W3 /permissive- /utf-8 /EHsc)
+    target_compile_definitions(LifeSim3D_Setup PRIVATE _CRT_SECURE_NO_WARNINGS)
+  endif()
+  add_custom_command(TARGET LifeSim3D_Setup POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:LifeSim3D_Setup>/assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:LifeSim3D_Setup>/assets
+    COMMENT "Copy assets for installer UI"
+  )
+endif()

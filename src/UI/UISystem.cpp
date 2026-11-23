@@ -214,5 +214,9 @@ void UISystem::DrawCharacterCreator() {
     if (app_->Cutscenes()) app_->Cutscenes()->Play("debut");
     Toast("Добро пожаловать в Underworld");
   }
+  Rectangle quit = {(float)sw * 0.5f - 110, (float)sh - 40, 220, 36};
+  if (btn(quit, "ВЫХОД", false)) {
+    app_->RequestExit();
+  }
 }
 

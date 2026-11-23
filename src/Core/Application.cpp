@@ -109,9 +109,19 @@ void Application::Update() {
       inv_->Toggle();
       return;
     }
+    if (phone_ && phone_->IsOpen()) {
+      phone_->Close();
+      return;
+    }
+    if (state_ == AppState::CharacterCreate) {
+      running_ = false; // exit from creator
+      return;
+    }
     if (state_ == AppState::Playing) state_ = AppState::Pause;
     else if (state_ == AppState::Pause) state_ = AppState::Playing;
   }
+  // Alt+F4 / window button
+  if (WindowShouldClose()) running_ = false;
 
   if (state_ == AppState::CharacterCreate) return;
 
@@ -258,7 +268,7 @@ void Application::DrawPauseMenu() {
   Rectangle panel = {x, y, w, h};
   DrawRectangleRounded(panel, 0.12f, 10, Config::ColPanel2());
   DrawRectangleRoundedLines(panel, 0.12f, 10, Config::ColAccent());
-  DrawTextRu("PAUSE", (int)(x + 120), (int)(y + 30), 32, Config::ColText());
+  DrawTextRu("ПАУЗА", (int)(x + 120), (int)(y + 30), 32, Config::ColText());
 
   auto btn = [&](const char* label, float by, bool& hover) -> bool {
     Rectangle r = {x + 40, y + by, w - 80, 44};
@@ -272,9 +282,9 @@ void Application::DrawPauseMenu() {
   };
 
   bool h1 = false, h2 = false, h3 = false;
-  if (btn("Continue", 90, h1)) state_ = AppState::Playing;
-  if (btn("Save", 150, h2)) saves_->Save(*player_, *world_);
-  if (btn("Exit Game", 210, h3)) {
+  if (btn("Продолжить", 90, h1)) state_ = AppState::Playing;
+  if (btn("Сохранить", 150, h2)) saves_->Save(*player_, *world_);
+  if (btn("Выход", 210, h3)) {
     saves_->Save(*player_, *world_);
     running_ = false;
   }

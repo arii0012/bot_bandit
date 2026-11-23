@@ -53,3 +53,18 @@ Tag `v1.0.0` → creates a Release with both packages.
 
 Cities, heists, craft, phone, garage, tuning, drift + tires, exhaust particles, engine audio,  
 businesses, smart home, music studio, fighting, racing, auction, damage, inventory, cutscenes, save.
+
+
+## Windows installer
+
+GitHub Actions builds `BotBandit-Setup-1.0.0.exe` (Inno Setup):
+- choose install folder
+- desktop shortcut (checkbox)
+- launch after install (checkbox)
+- Start menu entry + uninstall
+
+## Exit game
+
+- **Esc** → Pause → **Выход**
+- Character creator → **ВЫХОД** or Esc
+- Window close / Alt+F4
