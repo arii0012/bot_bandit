@@ -207,6 +207,8 @@ public:
   }
 };
 
+using RenderOptimizer = EngineOptimizer;
+
 class CoreEngine {
 public:
   SceneGraph3D scene;
@@ -214,7 +216,7 @@ public:
   SaveSystemAtomic saves{"data/save.json"};
   PhysicsWorld physics;
   ParticleSystem3D particles;
-  EngineOptimizer optimizer;
+  RenderOptimizer optimizer;
 
   void Init() {
     db.SeedDefaults();

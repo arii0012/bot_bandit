@@ -223,7 +223,7 @@ public:
   }
 
 private:
-  static constexpr int MAX = 256;
+  static constexpr int MAX = 5120;
   Particle3D pool_[MAX]{};
   int cursor_ = 0;
   static float Rand(float a, float b) {
