@@ -40,10 +40,10 @@ Application::Application() {
   saves_ = std::make_unique<SaveSystem>();
   cutscenes_ = std::make_unique<CutsceneSystem>();
   systems_ = std::make_unique<GameSystems>(this);
-  phone_ = std::make_unique<Smartphone>();
+  phone_ = std::make_unique<Smartphone>(this);
   weather_ = std::make_unique<WeatherSystem>();
   drift_ = std::make_unique<DriftPhysics>();
-  inv_ = std::make_unique<InventoryUI>();
+  inv_ = std::make_unique<InventoryUI>(this);
   engineAudio_ = std::make_unique<EngineAudio>();
   exhaust_ = std::make_unique<ExhaustParticles>();
   shaders_ = std::make_unique<Shaders3D>();
