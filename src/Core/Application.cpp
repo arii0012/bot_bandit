@@ -97,6 +97,8 @@ void Application::InitWindowBorderless() {
 void Application::Run() {
   while (running_ && !WindowShouldClose()) {
     dt_ = GetFrameTime();
+    if (dt_ > 0.1f) dt_ = 0.1f;
+    if (dt_ < 0.f) dt_ = 0.f;
     Update();
     BeginDrawing();
     Draw();
