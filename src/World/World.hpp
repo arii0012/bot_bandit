@@ -5,7 +5,7 @@
 #include <vector>
 
 struct Building {
-  float baseX;   // 0..1 of screen width cycle
+  float baseX;
   int width;
   int height;
   int seed;
@@ -29,13 +29,18 @@ private:
   void DrawSky(int sw, int sh);
   void DrawBuildings(int sw, int sh);
   void DrawGround(int sw, int sh);
+  void DrawTraffic(int sw, int sh);
+  void DrawPedestrians(int sw, int sh);
+  void DrawStreetProps(int sw, int sh);
 
   std::string cityId_ = "липецк";
-  float timeOfDay_ = 12.f;
+  float timeOfDay_ = 14.f;
   float scroll_ = 0.f;
+  float trafficT_ = 0.f;
+  float pedT_ = 0.f;
   std::vector<Building> buildings_;
   int lastSw_ = 0;
-  // cached sky colors
-  Color skyTop_{}, skyBot_{};
+  Color skyTop_{};
+  Color skyBot_{};
   float lastSkyT_ = -1.f;
 };

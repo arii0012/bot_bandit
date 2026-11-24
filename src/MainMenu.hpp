@@ -95,7 +95,7 @@ public:
     FontUI::Get().DrawNeon("BOT BANDIT", 56, 48, 52, Color{255, 255, 255, 255},
                            Color{220, 40, 80, 140});
     FontUI::Get().DrawShadow("UNDERWORLD", 60, 110, 26, Color{0, 220, 255, 255});
-    FontUI::Get().Draw("MAIN MENU", 60, 148, 16, Color{140, 140, 160, 255});
+    FontUI::Get().Draw(u8"ГЛАВНОЕ МЕНЮ", 60, 148, 16, Color{140, 140, 160, 255});
 
     // buttons
     for (int i = 0; i < btnCount_; ++i) {
@@ -115,7 +115,7 @@ public:
 
     DrawRectangle(0, 0, sw, 28, Fade(BLACK, 0.35f));
     DrawRectangle(0, sh - 36, sw, 36, Fade(BLACK, 0.5f));
-    FontUI::Get().Draw("LMB — select   ESC — quit", 24, (float)sh - 28, 14, Color{120, 120, 140, 255});
+    FontUI::Get().Draw(u8"ЛКМ — выбор   ESC не закрывает игру", 24, (float)sh - 28, 14, Color{120, 120, 140, 255});
   }
 
 private:
@@ -132,7 +132,7 @@ private:
       btns_[btnCount_] = Rectangle{bx, by + btnCount_ * (bh + gap), bw, bh};
       btnCount_++;
     };
-    if (hasSave_) add("CONTINUE", MainMenuAction::Continue, true);
+    if (hasSave_) add("CONTINUE", MainMenuAction::Continue, true); // PRODOLZHIT
     add("NEW GAME", MainMenuAction::NewGame, !hasSave_);
     add("CHARACTER STUDIO", MainMenuAction::CharacterStudio, false);
     add("3D GARAGE", MainMenuAction::Garage3D, false);

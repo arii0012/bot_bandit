@@ -21,6 +21,7 @@
 #include "CustomCursor.hpp"
 #include "Garage3D.hpp"
 #include "Mechanics20.hpp"
+#include "Systems/AudioEngine.hpp"
 #include <cstdio>
 #include <algorithm>
 #include <cmath>
@@ -29,6 +30,7 @@ Application::Application() {
   InitWindowBorderless();
   SetTargetFPS(60);
   FontUI::Get().Init();
+  AudioEngine::Get().Init();
   HideCursor();
 
   assets_ = std::make_unique<AssetManager>();
@@ -64,6 +66,7 @@ Application::~Application() {
   }
   if (shaders_) shaders_->Shutdown();
   if (engineAudio_) engineAudio_->Stop();
+  AudioEngine::Get().Shutdown();
   FontUI::Get().Shutdown();
   if (IsWindowReady()) CloseWindow();
 }
@@ -110,7 +113,12 @@ void Application::Run() {
     dt_ = GetFrameTime();
     if (dt_ > 0.1f) dt_ = 0.1f;
     if (dt_ < 0.f) dt_ = 0.f;
-
+    AudioEngine::Get().Update(dt_);
+    if (state_ == AppState::MainMenu) AudioEngine::Get().SetMood(MusicMood::Menu);
+    else if (state_ == AppState::Playing) {
+      if (player_ && player_->Wanted() >= 3) AudioEngine::Get().SetMood(MusicMood::Chase);
+      else AudioEngine::Get().SetMood(MusicMood::City);
+    }
     Update();
     BeginDrawing();
     ClearBackground(Color{8, 8, 14, 255});
@@ -275,8 +283,25 @@ void Application::DrawHUD() {
            (long long)player_->Money(), player_->Level(), player_->Energy(), player_->Wanted());
   DrawRectangleRounded(Rectangle{pad, pad, 420, 40}, 0.2f, 8, Color{10, 10, 18, 200});
   FontUI::Get().Draw(buf, pad + 12, pad + 10, 18, Color{240, 240, 250, 255});
-  FontUI::Get().Draw("TAB radial  I inv  P phone  G garage  ~ console  ESC pause",
-                     pad, (float)screenH_ - 28, 14, Color{130, 130, 150, 255});
+  // bottom action bar
+  float barH = 52.f;
+  DrawRectangle(0, screenH_ - (int)barH, screenW_, (int)barH, Color{10, 10, 18, 220});
+  const char* labs[] = {u8"ТЕЛЕФОН (P)", u8"ИНВЕНТАРЬ (I)", u8"ГАРАЖ (G)", u8"МЕНЮ (ESC)"};
+  float bw = 180.f;
+  float startX = 16.f;
+  for (int i = 0; i < 4; ++i) {
+    Rectangle r{startX + i * (bw + 12), screenH_ - barH + 8, bw, 36};
+    bool h = CheckCollisionPointRec(GetMousePosition(), r);
+    DrawRectangleRounded(r, 0.25f, 8, h ? Color{255, 60, 90, 255} : Color{36, 36, 52, 255});
+    int tw = FontUI::Get().Measure(labs[i], 14);
+    FontUI::Get().Draw(labs[i], r.x + (r.width - tw) * 0.5f, r.y + 10, 14, WHITE);
+    if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+      if (i == 0 && phone_) { if (phone_->IsOpen()) phone_->Close(); else phone_->Open(); }
+      if (i == 1 && inv_) inv_->Toggle();
+      if (i == 2 && garage3d_) garage3d_->Open(*player_);
+      if (i == 3) state_ = AppState::Pause;
+    }
+  }
 }
 
 void Application::DrawPauseMenu() {
@@ -285,9 +310,9 @@ void Application::DrawPauseMenu() {
   float w = 360, h = 220;
   float x = (sw - w) * 0.5f, y = (sh - h) * 0.5f;
   DrawRectangleRounded(Rectangle{x, y, w, h}, 0.08f, 10, Color{20, 20, 30, 240});
-  FontUI::Get().DrawCentered("PAUSE", x + w * 0.5f, y + 36, 32, WHITE);
-  FontUI::Get().DrawCentered("ESC — resume", x + w * 0.5f, y + 100, 18, Color{180, 180, 200, 255});
-  FontUI::Get().DrawCentered("Q — quit to menu", x + w * 0.5f, y + 140, 18, Color{180, 180, 200, 255});
+  FontUI::Get().DrawCentered(u8"ПАУЗА", x + w * 0.5f, y + 36, 32, WHITE);
+  FontUI::Get().DrawCentered(u8"ESC — продолжить", x + w * 0.5f, y + 100, 18, Color{180, 180, 200, 255});
+  FontUI::Get().DrawCentered(u8"Q — в главное меню", x + w * 0.5f, y + 140, 18, Color{180, 180, 200, 255});
   if (IsKeyPressed(KEY_Q)) {
     state_ = AppState::MainMenu;
     if (mainMenu_) mainMenu_->Open(saves_ && saves_->Exists());

@@ -223,6 +223,7 @@ void UISystem::DrawCharacterCreator() {
 
 
 #include "ShopCatalog.hpp"
+#include "Systems/AudioEngine.hpp"
 
 void UISystem::DrawSettings() {
   int sw = app_->ScreenW(), sh = app_->ScreenH();
@@ -231,8 +232,8 @@ void UISystem::DrawSettings() {
   float x = (sw - panelW) * 0.5f, y = (sh - panelH) * 0.5f;
   DrawRectangleRounded(Rectangle{x, y, panelW, panelH}, 0.06f, 12, Color{22, 22, 34, 240});
   DrawRectangleRoundedLines(Rectangle{x, y, panelW, panelH}, 0.06f, 12, Color{220, 40, 70, 255});
-  DrawTextRu("SETTINGS", (int)(x + 28), (int)(y + 24), 28, WHITE);
-  DrawTextRu("ESC — back", (int)(x + 28), (int)(y + 58), 16, Color{140, 140, 160, 255});
+  DrawTextRu(u8"НАСТРОЙКИ", (int)(x + 28), (int)(y + 24), 28, WHITE);
+  DrawTextRu(u8"ESC — назад", (int)(x + 28), (int)(y + 58), 16, Color{140, 140, 160, 255});
 
   auto slider = [&](float sx, float sy, const char* lab, float* val) {
     DrawTextRu(lab, (int)sx, (int)sy, 18, Color{200, 200, 210, 255});
@@ -247,21 +248,23 @@ void UISystem::DrawSettings() {
       if (*val > 1) *val = 1;
     }
   };
-  slider(x + 40, y + 100, "Music volume", &volMusic_);
-  slider(x + 40, y + 160, "SFX volume", &volSfx_);
-  slider(x + 40, y + 220, "Brightness", &brightness_);
-  slider(x + 40, y + 280, "Camera sensitivity", &camSens_);
+  slider(x + 40, y + 100, u8"Громкость музыки", &volMusic_);
+  AudioEngine::Get().SetMusicVolume(volMusic_);
+  slider(x + 40, y + 160, u8"Громкость эффектов", &volSfx_);
+  AudioEngine::Get().SetSfxVolume(volSfx_);
+  slider(x + 40, y + 220, u8"Яркость", &brightness_);
+  slider(x + 40, y + 280, u8"Чувствительность камеры", &camSens_);
 
   Rectangle tog{x + 40, y + 340, 200, 40};
   bool h = CheckCollisionPointRec(GetMousePosition(), tog);
   DrawRectangleRounded(tog, 0.25f, 8, shadersOn_ ? Color{40, 160, 90, 255} : Color{50, 50, 70, 255});
-  DrawTextRu(shadersOn_ ? "Shaders ON" : "Shaders OFF", (int)(tog.x + 24), (int)(tog.y + 10), 18, WHITE);
+  DrawTextRu(shadersOn_ ? u8"Шейдеры ВКЛ" : u8"Шейдеры ВЫКЛ", (int)(tog.x + 24), (int)(tog.y + 10), 18, WHITE);
   if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) shadersOn_ = !shadersOn_;
 
   Rectangle back{x + panelW - 160, y + panelH - 56, 130, 40};
   h = CheckCollisionPointRec(GetMousePosition(), back);
   DrawRectangleRounded(back, 0.25f, 8, h ? Color{255, 60, 90, 255} : Color{220, 40, 70, 255});
-  DrawTextRu("BACK", (int)(back.x + 40), (int)(back.y + 10), 18, WHITE);
+  DrawTextRu(u8"НАЗАД", (int)(back.x + 40), (int)(back.y + 10), 18, WHITE);
   if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
     app_->SetState(AppState::MainMenu);
   }
@@ -277,7 +280,7 @@ void UISystem::DrawShop(int mode) {
   else if (mode == (int)AppState::Shop) { title = "SHOP"; cat = &CatalogClothes(); }
 
   DrawTextRu(title, 40, 30, 32, WHITE);
-  DrawTextRu("ESC — back", 40, 70, 16, Color{140, 140, 160, 255});
+  DrawTextRu(u8"ESC — назад", 40, 70, 16, Color{140, 140, 160, 255});
   auto* p = app_->Player();
   char money[64];
   snprintf(money, sizeof(money), "$%lld", p ? (long long)p->Money() : 0);

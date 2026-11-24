@@ -1,35 +1,46 @@
-#include "World.hpp"
-#include "Core/FontUI.hpp"
-#include "Core/Config.hpp"
+#include "World/World.hpp"
+#include "raylib.h"
 #include <cmath>
-#include <cstdlib>
+#include <algorithm>
+#include <cstdio>
+
+static Color shade_body(Color c) {
+  return Color{
+    (unsigned char)(c.r * 7 / 10),
+    (unsigned char)(c.g * 7 / 10),
+    (unsigned char)(c.b * 7 / 10),
+    c.a};
+}
 
 World::World() {
-  buildings_.reserve(16);
+  EnsureBuildings(1280);
 }
 
 void World::EnsureBuildings(int sw) {
-  if (lastSw_ == sw && !buildings_.empty()) return;
+  if (sw == lastSw_ && !buildings_.empty()) return;
   lastSw_ = sw;
   buildings_.clear();
-  for (int i = 0; i < 12; ++i) {
+  int n = 18 + (sw / 160);
+  for (int i = 0; i < n; ++i) {
     Building b;
-    b.baseX = (float)i / 12.f;
-    b.width = 64 + (i * 17) % 55;
-    b.height = 100 + (i * 43) % 160;
-    b.seed = i * 19 + 7;
+    b.baseX = (float)i / (float)n + (GetRandomValue(0, 20) / 1000.f);
+    b.width = 40 + GetRandomValue(0, 50);
+    b.height = 80 + GetRandomValue(0, 220);
+    b.seed = i * 17 + 3;
     buildings_.push_back(b);
   }
 }
 
 void World::Update(float dt) {
-  timeOfDay_ += dt * 0.12f;
-  if (timeOfDay_ >= 24.f) timeOfDay_ -= 24.f;
-  scroll_ += dt * 10.f;
+  if (dt > 0.1f) dt = 0.1f;
+  timeOfDay_ = fmodf(timeOfDay_ + dt * 0.03f, 24.f);
+  scroll_ += dt * 18.f;
+  trafficT_ += dt;
+  pedT_ += dt;
 }
 
 std::string World::CurrentCityName() const {
-  auto* c = FindCity(cityId_);
+  const City* c = Current();
   return c ? c->name : cityId_;
 }
 
@@ -44,99 +55,136 @@ void World::DrawSky(int sw, int sh) {
   if (fabsf(t - lastSkyT_) > 0.05f) {
     lastSkyT_ = t;
     if (t < 6.f || t > 21.f) {
-      skyTop_ = {8, 8, 22, 255};
-      skyBot_ = {18, 12, 32, 255};
+      skyTop_ = {6, 6, 18, 255};
+      skyBot_ = {14, 10, 28, 255};
     } else if (t < 8.f || t > 19.f) {
-      skyTop_ = {90, 45, 65, 255};
-      skyBot_ = {140, 70, 45, 255};
+      skyTop_ = {100, 48, 70, 255};
+      skyBot_ = {180, 90, 60, 255};
+    } else if (t < 10.f) {
+      skyTop_ = {70, 120, 190, 255};
+      skyBot_ = {180, 200, 230, 255};
     } else {
-      skyTop_ = {55, 95, 140, 255};
-      skyBot_ = {100, 140, 170, 255};
+      skyTop_ = {45, 110, 200, 255};
+      skyBot_ = {140, 180, 230, 255};
     }
   }
-  int mid = sh / 2;
-  DrawRectangleGradientV(0, 0, sw, mid, skyTop_, skyBot_);
-  DrawRectangle(0, mid, sw, sh - mid, skyBot_);
-  // sun/moon
-  if (t >= 6.f && t <= 20.f) {
-    float sunX = (t - 6.f) / 14.f * sw;
-    float sunY = mid - sinf((t - 6.f) / 14.f * 3.14159f) * (mid * 0.55f);
-    DrawCircle((int)sunX, (int)sunY, 28, Fade(Color{255, 230, 150, 255}, 0.9f));
-    DrawCircle((int)sunX, (int)sunY, 40, Fade(Color{255, 200, 100, 255}, 0.15f));
-  } else {
-    DrawCircle(sw * 3 / 4, sh / 6, 18, Color{220, 220, 240, 255});
+  DrawRectangleGradientV(0, 0, sw, sh, skyTop_, skyBot_);
+  // stars at night
+  if (t < 6.f || t > 20.f) {
+    for (int i = 0; i < 40; ++i) {
+      int sx = (i * 97 + (int)scroll_) % sw;
+      int sy = (i * 53) % (sh / 2);
+      DrawPixel(sx, sy, Color{200, 200, 230, 180});
+    }
   }
 }
 
 void World::DrawBuildings(int sw, int sh) {
   EnsureBuildings(sw);
-  const int groundY = sh * 2 / 3;
-  const float cycle = (float)sw + 140.f;
+  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
+  float groundY = sh * 0.72f;
 
   for (auto& b : buildings_) {
-    float x = fmodf(b.baseX * cycle + scroll_, cycle) - 70.f;
-    int bh = b.height;
-    int by = groundY - bh;
-    int bw = b.width;
-    int depth = 14 + (b.seed % 10);
-
-    // side face (3D extrusion)
-    Color sideCol = {18, 18, 24, 255};
-    DrawTriangle(
-      {(float)x + bw, (float)by},
-      {(float)x + bw + depth, (float)by - depth * 0.4f},
-      {(float)x + bw + depth, (float)by + bh - depth * 0.4f},
-      sideCol);
-    DrawTriangle(
-      {(float)x + bw, (float)by},
-      {(float)x + bw + depth, (float)by + bh - depth * 0.4f},
-      {(float)x + bw, (float)by + bh},
-      sideCol);
-
-    // roof top edge
-    Color roof = {30, 30, 38, 255};
-    DrawTriangle(
-      {(float)x, (float)by},
-      {(float)x + bw, (float)by},
-      {(float)x + bw + depth, (float)by - depth * 0.4f},
-      roof);
-    DrawTriangle(
-      {(float)x, (float)by},
-      {(float)x + bw + depth, (float)by - depth * 0.4f},
-      {(float)x + depth * 0.5f, (float)by - depth * 0.4f},
-      roof);
-
-    // front face
-    Color front = {(unsigned char)(28 + (b.seed % 12)), 28, 36, 255};
-    DrawRectangle((int)x, by, bw, bh, front);
-
-    // windows grid with night glow
-    bool night = timeOfDay_ < 7.f || timeOfDay_ > 20.f;
-    int rows = 3 + (b.seed % 2);
-    int cols = 2 + (b.seed % 3);
-    int cellW = (bw - 12) / cols;
-    int gapY = (bh - 24) / (rows + 1);
+    float x = fmodf(b.baseX * sw * 1.4f - scroll_ * 12.f, (float)sw + 120.f) - 60.f;
+    float h = (float)b.height;
+    float w = (float)b.width;
+    float y = groundY - h;
+    Color wall = {(unsigned char)(18 + (b.seed % 20)), (unsigned char)(20 + (b.seed % 15)),
+                  (unsigned char)(28 + (b.seed % 25)), 255};
+    DrawRectangle((int)x, (int)y, (int)w, (int)h, wall);
+    // cornice
+    DrawRectangle((int)x - 2, (int)y, (int)w + 4, 6, Color{40, 40, 50, 255});
+    // windows
+    int cols = std::max(2, (int)w / 14);
+    int rows = std::max(2, (int)h / 18);
     for (int r = 0; r < rows; ++r) {
       for (int c = 0; c < cols; ++c) {
-        int wx = (int)x + 6 + c * cellW;
-        int wy = by + 14 + r * gapY;
-        bool lit = night && ((b.seed + r * 5 + c * 3) % 4 != 0);
-        Color wc = lit ? Color{255, 210, 120, 210} : Color{45, 50, 60, 255};
-        DrawRectangle(wx, wy, cellW - 5, 11, wc);
-        if (lit) DrawRectangle(wx, wy, cellW - 5, 2, Fade(WHITE, 0.25f));
+        int wx = (int)x + 4 + c * ((int)w / cols);
+        int wy = (int)y + 10 + r * ((int)h / rows);
+        int lit = ((b.seed + r * 3 + c * 7 + (int)timeOfDay_) % 5);
+        Color win = night ? (lit < 3 ? Color{255, 210, 120, 220} : Color{20, 25, 40, 255})
+                          : Color{120, 160, 200, 100};
+        DrawRectangle(wx, wy, 8, 10, win);
       }
+    }
+    // neon sign on some buildings
+    if (b.seed % 4 == 0) {
+      const char* signs[] = {"CASINO", "CLUB", "AZS", "SHOP", "GARAGE"};
+      const char* s = signs[b.seed % 5];
+      Color neon = b.seed % 2 ? Color{255, 40, 90, 255} : Color{0, 220, 255, 255};
+      DrawRectangle((int)x + 4, (int)y + 14, (int)w - 8, 16, Fade(neon, 0.25f));
+      DrawText(s, (int)x + 8, (int)y + 16, 10, neon);
     }
   }
 }
 
 void World::DrawGround(int sw, int sh) {
-  int gy = sh * 2 / 3;
-  DrawRectangle(0, gy, sw, sh - gy, Color{32, 32, 38, 255});
-  // perspective road
-  DrawRectangle(0, gy + 6, sw, 4, Color{55, 55, 62, 255});
+  float groundY = sh * 0.72f;
+  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
+  DrawRectangle(0, (int)groundY, sw, sh - (int)groundY, night ? Color{22, 22, 28, 255} : Color{40, 42, 48, 255});
+  // road
+  float roadY = groundY + 20.f;
+  DrawRectangle(0, (int)roadY, sw, 48, Color{28, 28, 32, 255});
+  // lane marks
+  for (int i = 0; i < sw / 40 + 2; ++i) {
+    float lx = fmodf(i * 40.f - scroll_ * 40.f, (float)sw + 40.f);
+    DrawRectangle((int)lx, (int)roadY + 22, 20, 4, Color{200, 200, 120, 200});
+  }
+  // sidewalks
+  DrawRectangle(0, (int)groundY, sw, 18, Color{48, 48, 56, 255});
+  DrawRectangle(0, (int)roadY + 48, sw, 14, Color{48, 48, 56, 255});
+  // crosswalk
+  float cx = fmodf(sw * 0.4f - scroll_ * 10.f, (float)sw);
+  for (int i = 0; i < 6; ++i)
+    DrawRectangle((int)cx + i * 10, (int)roadY + 4, 6, 40, Color{220, 220, 230, 180});
+}
+
+void World::DrawTraffic(int sw, int sh) {
+  float roadY = sh * 0.72f + 28.f;
+  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
+  for (int i = 0; i < 6; ++i) {
+    float speed = 40.f + (i % 3) * 25.f;
+    float x = fmodf(i * 220.f + trafficT_ * speed, (float)sw + 100.f) - 50.f;
+    Color body = {(unsigned char)(40 + i * 30), (unsigned char)(40 + (i * 50) % 120),
+                  (unsigned char)(50 + i * 20), 255};
+    DrawRectangleRounded(Rectangle{x, roadY, 54, 18}, 0.3f, 4, body);
+    DrawRectangleRounded(Rectangle{x + 12, roadY - 10, 28, 12}, 0.2f, 4, shade_body(body));
+    DrawCircle((int)(x + 12), (int)(roadY + 18), 5, BLACK);
+    DrawCircle((int)(x + 42), (int)(roadY + 18), 5, BLACK);
+    if (night) {
+      DrawRectangle((int)(x + 50), (int)(roadY + 4), 6, 4, Color{255, 240, 180, 255});
+      DrawRectangle((int)x - 2, (int)(roadY + 4), 4, 4, Color{220, 40, 40, 255});
+    }
+  }
+}
+
+void World::DrawPedestrians(int sw, int sh) {
+  float walkY = sh * 0.72f + 6.f;
   for (int i = 0; i < 8; ++i) {
-    float lx = fmodf(i * 160.f + scroll_ * 1.5f, sw + 80.f) - 40.f;
-    DrawRectangle((int)lx, gy + 28, 40, 5, Color{200, 200, 180, 100});
+    float x = fmodf(i * 160.f + pedT_ * (20.f + i * 3.f) * ((i % 2) ? 1.f : -1.f), (float)sw + 40.f);
+    if (x < 0) x += sw + 40.f;
+    float bob = sinf(pedT_ * 8.f + i) * 2.f;
+    Color skin = {210, 170, 140, 255};
+    Color cloth = {(unsigned char)(40 + i * 20), (unsigned char)(40 + i * 10), 70, 255};
+    DrawRectangle((int)x, (int)(walkY - 18 + bob), 8, 14, cloth);
+    DrawCircle((int)(x + 4), (int)(walkY - 24 + bob), 5, skin);
+    DrawRectangle((int)x, (int)(walkY - 4 + bob), 3, 10, Color{30, 30, 40, 255});
+    DrawRectangle((int)x + 5, (int)(walkY - 4 + bob), 3, 10, Color{30, 30, 40, 255});
+  }
+}
+
+void World::DrawStreetProps(int sw, int sh) {
+  float groundY = sh * 0.72f;
+  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
+  for (int i = 0; i < sw / 120 + 1; ++i) {
+    float x = fmodf(i * 120.f - scroll_ * 8.f, (float)sw + 40.f);
+    // lamp
+    DrawRectangle((int)x, (int)groundY - 50, 4, 50, Color{60, 60, 70, 255});
+    DrawCircle((int)x + 2, (int)groundY - 52, 6, night ? Color{255, 230, 150, 255} : Color{180, 180, 190, 255});
+    if (night) {
+      DrawTriangle(Vector2{(float)x + 2, groundY - 52}, Vector2{(float)x - 30, groundY},
+                   Vector2{(float)x + 34, groundY}, Fade(Color{255, 220, 140, 255}, 0.12f));
+    }
   }
 }
 
@@ -144,9 +192,13 @@ void World::Draw(int sw, int sh) {
   DrawSky(sw, sh);
   DrawBuildings(sw, sh);
   DrawGround(sw, sh);
-  auto* c = Current();
-  if (c) {
-    DrawTextRu(c->name.c_str(), 24, sh * 2 / 3 + 20, 28, Config::ColText());
-    DrawTextRu(c->desc.c_str(), 24, sh * 2 / 3 + 52, 18, Config::ColMuted());
-  }
+  DrawStreetProps(sw, sh);
+  DrawTraffic(sw, sh);
+  DrawPedestrians(sw, sh);
+
+  // city label
+  char buf[64];
+  snprintf(buf, sizeof(buf), "%s  %.0f:00", CurrentCityName().c_str(), timeOfDay_);
+  DrawRectangle(12, 12, 260, 28, Color{0, 0, 0, 140});
+  DrawText(buf, 20, 18, 16, WHITE);
 }

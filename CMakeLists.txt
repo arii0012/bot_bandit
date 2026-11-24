@@ -62,6 +62,7 @@ set(GAME_SOURCES
   src/Systems/SmartHome.cpp
   src/Systems/Damage.cpp
   src/Systems/EngineAudio.cpp
+  src/Systems/AudioEngine.cpp
   src/Smartphone/Smartphone.cpp
   src/Minigames/Fighting.cpp
   src/Minigames/Racing.cpp
