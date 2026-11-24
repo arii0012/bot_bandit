@@ -34,7 +34,7 @@ inline bool GlassButton(Rectangle r, const char* label, bool primary = false, fl
   DrawRectangleRoundedLines(rr, 0.28f, 10, h ? WHITE : Fade(Accent2(), 0.35f));
   if (h) DrawRectangleRounded(rr, 0.28f, 10, Fade(WHITE, 0.06f));
   float sz = 20.f;
-  int tw = FontUI::Get().Ready() ? FontUI::Get().Measure(label, sz) : MeasureText(label, (int)sz);
+  int tw = FontUI::Get().Ready() ? FontUI::Get().Measure(label, sz) : FontUI::Get().Measure(label, sz);
   FontUI::Get().Draw(label, rr.x + (rr.width - tw) * 0.5f, rr.y + (rr.height - sz) * 0.5f, sz, Text());
   return h && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 }
