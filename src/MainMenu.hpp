@@ -95,12 +95,21 @@ public:
     FontUI::Get().DrawNeon("BOT BANDIT", 56, 48, 52, Color{255, 255, 255, 255},
                            Color{220, 40, 80, 140});
     FontUI::Get().DrawShadow("UNDERWORLD", 60, 110, 26, Color{0, 220, 255, 255});
-    FontUI::Get().Draw(u8"ГЛАВНОЕ МЕНЮ", 60, 148, 16, Color{140, 140, 160, 255});
+    FontUI::Get().Draw("ГЛАВНОЕ МЕНЮ", 60, 148, 16, Color{140, 140, 160, 255});
 
+    // glass panel
+    if (btnCount_ > 0) {
+      float top = btns_[0].y - 20.f;
+      float bot = btns_[btnCount_ - 1].y + btns_[btnCount_ - 1].height + 20.f;
+      Rectangle panel{btns_[0].x - 20.f, top, btns_[0].width + 40.f, bot - top};
+      DrawRectangleRounded(panel, 0.08f, 12, Color{16, 16, 28, 200});
+      DrawRectangleRoundedLines(panel, 0.08f, 12, Color{220, 40, 70, 160});
+    }
     // buttons
     for (int i = 0; i < btnCount_; ++i) {
       Rectangle r = btns_[i];
       bool h = (i == hover_);
+      if (h) r.x += 10.f;
       Color fill = h ? Color{255, 60, 95, 255} : (i == 0 && hasSave_ ? Color{220, 45, 75, 255}
                                                                     : Color{32, 32, 48, 230});
       if (!primary_[i]) {
@@ -115,7 +124,7 @@ public:
 
     DrawRectangle(0, 0, sw, 28, Fade(BLACK, 0.35f));
     DrawRectangle(0, sh - 36, sw, 36, Fade(BLACK, 0.5f));
-    FontUI::Get().Draw(u8"ЛКМ — выбор   ESC не закрывает игру", 24, (float)sh - 28, 14, Color{120, 120, 140, 255});
+    FontUI::Get().Draw("ЛКМ — выбор   ESC не закрывает игру", 24, (float)sh - 28, 14, Color{120, 120, 140, 255});
   }
 
 private:

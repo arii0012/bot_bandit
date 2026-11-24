@@ -286,7 +286,7 @@ void Application::DrawHUD() {
   // bottom action bar
   float barH = 52.f;
   DrawRectangle(0, screenH_ - (int)barH, screenW_, (int)barH, Color{10, 10, 18, 220});
-  const char* labs[] = {u8"ТЕЛЕФОН (P)", u8"ИНВЕНТАРЬ (I)", u8"ГАРАЖ (G)", u8"МЕНЮ (ESC)"};
+  const char* labs[] = {"ТЕЛЕФОН (P)", "ИНВЕНТАРЬ (I)", "ГАРАЖ (G)", "МЕНЮ (ESC)"};
   float bw = 180.f;
   float startX = 16.f;
   for (int i = 0; i < 4; ++i) {
@@ -310,9 +310,9 @@ void Application::DrawPauseMenu() {
   float w = 360, h = 220;
   float x = (sw - w) * 0.5f, y = (sh - h) * 0.5f;
   DrawRectangleRounded(Rectangle{x, y, w, h}, 0.08f, 10, Color{20, 20, 30, 240});
-  FontUI::Get().DrawCentered(u8"ПАУЗА", x + w * 0.5f, y + 36, 32, WHITE);
-  FontUI::Get().DrawCentered(u8"ESC — продолжить", x + w * 0.5f, y + 100, 18, Color{180, 180, 200, 255});
-  FontUI::Get().DrawCentered(u8"Q — в главное меню", x + w * 0.5f, y + 140, 18, Color{180, 180, 200, 255});
+  FontUI::Get().DrawCentered("ПАУЗА", x + w * 0.5f, y + 36, 32, WHITE);
+  FontUI::Get().DrawCentered("ESC — продолжить", x + w * 0.5f, y + 100, 18, Color{180, 180, 200, 255});
+  FontUI::Get().DrawCentered("Q — в главное меню", x + w * 0.5f, y + 140, 18, Color{180, 180, 200, 255});
   if (IsKeyPressed(KEY_Q)) {
     state_ = AppState::MainMenu;
     if (mainMenu_) mainMenu_->Open(saves_ && saves_->Exists());

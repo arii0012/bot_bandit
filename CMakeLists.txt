@@ -91,6 +91,7 @@ target_link_libraries(botbandit PRIVATE raylib nlohmann_json::nlohmann_json)
 target_compile_features(botbandit PRIVATE cxx_std_20)
 
 if(MSVC)
+  add_compile_options(/Zc:char8_t-)
   target_compile_options(botbandit PRIVATE /W3 /permissive- /utf-8 /EHsc)
   target_compile_definitions(botbandit PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()

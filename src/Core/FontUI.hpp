@@ -12,6 +12,17 @@ public:
   void Draw(const char* text, float x, float y, float size, Color color);
   void Draw(const std::string& text, float x, float y, float size, Color color);
   void DrawCentered(const char* text, float cx, float y, float size, Color color);
+#if defined(__cpp_char8_t)
+  void Draw(const char8_t* text, float x, float y, float size, Color color) {
+    Draw(reinterpret_cast<const char*>(text), x, y, size, color);
+  }
+  void DrawCentered(const char8_t* text, float cx, float y, float size, Color color) {
+    DrawCentered(reinterpret_cast<const char*>(text), cx, y, size, color);
+  }
+  int Measure(const char8_t* text, float size) {
+    return Measure(reinterpret_cast<const char*>(text), size);
+  }
+#endif
   void DrawShadow(const char* text, float x, float y, float size, Color color, Color shadow = {0, 0, 0, 180});
   void DrawNeon(const char* text, float x, float y, float size, Color color, Color glow = {220, 40, 80, 120});
 
