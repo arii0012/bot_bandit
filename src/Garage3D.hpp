@@ -1,5 +1,7 @@
 #pragma once
 #include "raylib.h"
+#include "Core/FontUI.hpp"
+#include <algorithm>
 #include "Procedural3DModeler.hpp"
 #include "CarDatabase150.hpp"
 #include "Character/Character.hpp"
@@ -37,11 +39,7 @@ public:
       toast_ = "Paint";
     }
     if (IsKeyPressed(KEY_THREE)) { p.engineLvl_ = std::min(5, p.engineLvl_ + 1); toast_ = "Chip +"; }
-    if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_G)) Close();
-    wheel_ += dt * 90.f;
-  }
-
-  void Draw(Character& p) {
+    if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(Kvoid Draw(Character& p) {
     if (!open_) return;
     int sw = GetScreenWidth(), sh = GetScreenHeight();
     Camera3D cam{};
@@ -51,23 +49,52 @@ public:
     cam.fovy = 50.f;
     cam.projection = CAMERA_PERSPECTIVE;
 
-    ClearBackground({12, 12, 18, 255});
+    ClearBackground(Color{12, 12, 18, 255});
     BeginMode3D(cam);
-    DrawPlane({0, 0, 0}, {20, 20}, {28, 28, 34, 255});
+    DrawPlane({0, 0, 0}, {20, 20}, Color{28, 28, 34, 255});
     DrawGrid(20, 1.f);
-    // garage walls
-    DrawCube({0, 2, -8}, 16, 4, 0.3f, {40, 40, 48, 255});
+    DrawCube({0, 2, -8}, 16, 4, 0.3f, Color{40, 40, 48, 255});
     Color body = {p.carR_, p.carG_, p.carB_, 255};
     Procedural3DModeler::DrawCar3D(body, {0, 0, 0}, 0, wheel_, p.neonCar_, true, 1.2f);
     EndMode3D();
 
-    UITheme::GlassPanel({20, 20, 360, 200});
-    UITheme::Title("3D GARAGE", 36, 32, 28);
+    // bottom glass panel
+    float ph = 120.f;
+    Rectangle panel{20, (float)sh - ph - 16, (float)sw - 40, ph};
+    DrawRectangleRounded(panel, 0.08f, 10, Color{16, 16, 26, 230});
+    DrawRectangleRoundedLines(panel, 0.08f, 10, Color{220, 40, 70, 180});
+
     std::string car = cars_.empty() ? "-" : cars_[sel_ % cars_.size()];
-    UITheme::Caption(("Auto: " + car).c_str(), 36, 70, 18);
-    UITheme::Caption("A/D rotate  W/S zoom  Q/E switch", 36, 96, 16);
-    UITheme::Caption("1 neon  2 paint  3 chip  Esc close", 36, 118, 16);
-    if (!toast_.empty()) UITheme::Caption(toast_.c_str(), 36, 150, 18);
+    FontUI::Get().Draw(car.c_str(), panel.x + 24, panel.y + 14, 22, WHITE);
+    char stats[128];
+    snprintf(stats, sizeof(stats), "Engine L%d  Turbo L%d  Neon %s", p.engineLvl_, p.turboLvl_,
+             p.neonCar_ ? "ON" : "OFF");
+    FontUI::Get().Draw(stats, panel.x + 24, panel.y + 42, 16, Color{160, 160, 180, 255});
+
+    auto btn = [&](float bx, const char* lab, float bw = 120.f) -> bool {
+      Rectangle r{panel.x + bx, panel.y + 70, bw, 36};
+      bool h = CheckCollisionPointRec(GetMousePosition(), r);
+      DrawRectangleRounded(r, 0.25f, 8, h ? Color{255, 60, 90, 255} : Color{40, 40, 58, 255});
+      int tw = FontUI::Get().Measure(lab, 16);
+      FontUI::Get().Draw(lab, r.x + (r.width - tw) * 0.5f, r.y + 8, 16, WHITE);
+      return h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    };
+    if (btn(20, "< PREV", 100)) sel_ = (sel_ + (int)cars_.size() - 1) % std::max(1, (int)cars_.size());
+    if (btn(130, "NEXT >", 100)) sel_ = (sel_ + 1) % std::max(1, (int)cars_.size());
+    if (btn(250, "NEON", 90)) { p.neonCar_ = !p.neonCar_; toast_ = p.neonCar_ ? "Neon ON" : "Neon OFF"; }
+    if (btn(350, "PAINT", 90)) {
+      p.carR_ = GetRandomValue(20, 255); p.carG_ = GetRandomValue(20, 255); p.carB_ = GetRandomValue(20, 255);
+      toast_ = "Paint";
+    }
+    if (btn(450, "CHIP", 90)) { p.engineLvl_ = std::min(5, p.engineLvl_ + 1); toast_ = "Chip +"; }
+    if (btn(550, "DRIVE", 100)) { open_ = false; }
+    if (btn(panel.width - 140, "BACK", 110)) { open_ = false; }
+
+    if (!toast_.empty())
+      FontUI::Get().Draw(toast_.c_str(), panel.x + 24, panel.y - 28, 18, Color{0, 220, 255, 255});
+  }
+
+eme::Caption(toast_.c_str(), 36, 150, 18);
   }
 
 private:

@@ -220,3 +220,112 @@ void UISystem::DrawCharacterCreator() {
   }
 }
 
+
+
+#include "ShopCatalog.hpp"
+
+void UISystem::DrawSettings() {
+  int sw = app_->ScreenW(), sh = app_->ScreenH();
+  DrawRectangle(0, 0, sw, sh, Color{8, 8, 14, 255});
+  float panelW = 520, panelH = 420;
+  float x = (sw - panelW) * 0.5f, y = (sh - panelH) * 0.5f;
+  DrawRectangleRounded(Rectangle{x, y, panelW, panelH}, 0.06f, 12, Color{22, 22, 34, 240});
+  DrawRectangleRoundedLines(Rectangle{x, y, panelW, panelH}, 0.06f, 12, Color{220, 40, 70, 255});
+  DrawTextRu("SETTINGS", (int)(x + 28), (int)(y + 24), 28, WHITE);
+  DrawTextRu("ESC — back", (int)(x + 28), (int)(y + 58), 16, Color{140, 140, 160, 255});
+
+  auto slider = [&](float sx, float sy, const char* lab, float* val) {
+    DrawTextRu(lab, (int)sx, (int)sy, 18, Color{200, 200, 210, 255});
+    Rectangle track{sx, sy + 28, 360, 14};
+    DrawRectangleRounded(track, 0.5f, 4, Color{40, 40, 55, 255});
+    DrawRectangleRounded(Rectangle{track.x, track.y, track.width * (*val), track.height}, 0.5f, 4, Color{220, 40, 70, 255});
+    Vector2 m = GetMousePosition();
+    if (CheckCollisionPointRec(m, Rectangle{track.x, track.y - 8, track.width, track.height + 16}) &&
+        IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+      *val = (m.x - track.x) / track.width;
+      if (*val < 0) *val = 0;
+      if (*val > 1) *val = 1;
+    }
+  };
+  slider(x + 40, y + 100, "Music volume", &volMusic_);
+  slider(x + 40, y + 160, "SFX volume", &volSfx_);
+  slider(x + 40, y + 220, "Brightness", &brightness_);
+  slider(x + 40, y + 280, "Camera sensitivity", &camSens_);
+
+  Rectangle tog{x + 40, y + 340, 200, 40};
+  bool h = CheckCollisionPointRec(GetMousePosition(), tog);
+  DrawRectangleRounded(tog, 0.25f, 8, shadersOn_ ? Color{40, 160, 90, 255} : Color{50, 50, 70, 255});
+  DrawTextRu(shadersOn_ ? "Shaders ON" : "Shaders OFF", (int)(tog.x + 24), (int)(tog.y + 10), 18, WHITE);
+  if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) shadersOn_ = !shadersOn_;
+
+  Rectangle back{x + panelW - 160, y + panelH - 56, 130, 40};
+  h = CheckCollisionPointRec(GetMousePosition(), back);
+  DrawRectangleRounded(back, 0.25f, 8, h ? Color{255, 60, 90, 255} : Color{220, 40, 70, 255});
+  DrawTextRu("BACK", (int)(back.x + 40), (int)(back.y + 10), 18, WHITE);
+  if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    app_->SetState(AppState::MainMenu);
+  }
+}
+
+void UISystem::DrawShop(int mode) {
+  int sw = app_->ScreenW(), sh = app_->ScreenH();
+  DrawRectangle(0, 0, sw, sh, Color{10, 10, 16, 255});
+  const char* title = "SHOP";
+  const std::vector<ShopItem>* cat = &CatalogCars();
+  if (mode == (int)AppState::Houses) { title = "HOUSES"; cat = &CatalogHouses(); }
+  else if (mode == (int)AppState::Travel) { title = "TRAVEL"; cat = nullptr; }
+  else if (mode == (int)AppState::Shop) { title = "SHOP"; cat = &CatalogClothes(); }
+
+  DrawTextRu(title, 40, 30, 32, WHITE);
+  DrawTextRu("ESC — back", 40, 70, 16, Color{140, 140, 160, 255});
+  auto* p = app_->Player();
+  char money[64];
+  snprintf(money, sizeof(money), "$%lld", p ? (long long)p->Money() : 0);
+  DrawTextRu(money, sw - 200, 30, 24, Color{244, 196, 48, 255});
+
+  if (mode == (int)AppState::Travel) {
+    for (int i = 0; i < CityCount; ++i) {
+      int col = i % 3, row = i / 3;
+      Rectangle r{(float)(40 + col * 280), (float)(110 + row * 70), 260, 56};
+      bool h = CheckCollisionPointRec(GetMousePosition(), r);
+      DrawRectangleRounded(r, 0.2f, 8, h ? Color{60, 50, 80, 255} : Color{30, 30, 45, 255});
+      DrawRectangleRoundedLines(r, 0.2f, 8, Color{0, 200, 255, 120});
+      DrawTextRu(CityList[i], (int)(r.x + 16), (int)(r.y + 16), 20, WHITE);
+      if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && p) {
+        p->SetCity(CityList[i]);
+        Toast(std::string("Travel -> ") + CityList[i]);
+        app_->SetState(AppState::Playing);
+      }
+    }
+    return;
+  }
+
+  if (!cat) return;
+  float scroll = 0.f;
+  for (size_t i = 0; i < cat->size(); ++i) {
+    const auto& it = (*cat)[i];
+    float y = 110.f + i * 72.f - scroll;
+    if (y > sh) break;
+    Rectangle card{40, y, (float)sw - 80, 64};
+    DrawRectangleRounded(card, 0.12f, 8, Color{24, 24, 36, 230});
+    DrawRectangleRoundedLines(card, 0.12f, 8, Color{220, 40, 70, 100});
+    DrawTextRu(it.name, (int)(card.x + 20), (int)(card.y + 12), 20, WHITE);
+    char pr[32];
+    snprintf(pr, sizeof(pr), "$%d", it.price);
+    DrawTextRu(pr, (int)(card.x + 20), (int)(card.y + 36), 16, Color{244, 196, 48, 255});
+    Rectangle buy{card.x + card.width - 140, card.y + 12, 120, 40};
+    bool h = CheckCollisionPointRec(GetMousePosition(), buy);
+    DrawRectangleRounded(buy, 0.25f, 8, h ? Color{255, 60, 90, 255} : Color{220, 40, 70, 255});
+    DrawTextRu("BUY", (int)(buy.x + 36), (int)(buy.y + 10), 18, WHITE);
+    if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && p) {
+      if (p->Money() >= it.price) {
+        p->AddMoney(-it.price);
+        if (std::string(it.kind) == "clothes") p->Inv().clothes.push_back(it.id);
+        else if (std::string(it.kind) == "cars") { p->Inv().cars.push_back(it.name); p->SetActiveCar(it.name); }
+        else if (std::string(it.kind) == "weapons") p->Inv().weapons.push_back(it.name);
+        else if (std::string(it.kind) == "houses") p->Inv().items.push_back(it.id);
+        Toast(std::string("Bought ") + it.name);
+      } else Toast("Not enough money");
+    }
+  }
+}

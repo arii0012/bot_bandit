@@ -72,6 +72,7 @@ void Application::InitWindowBorderless() {
   SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT | FLAG_WINDOW_ALWAYS_RUN);
   // Init first so monitor queries work on all platforms / DPI
   InitWindow(1280, 720, "BOT BANDIT: UNDERWORLD");
+  SetExitKey(KEY_NULL);
   int mon = GetCurrentMonitor();
   if (mon < 0) mon = 0;
   screenW_ = GetMonitorWidth(mon);
@@ -153,25 +154,29 @@ void Application::Update() {
         mainMenu_->Close();
       }
     } else if (act == MainMenuAction::Settings) {
-      if (ui_) ui_->Toast("Settings");
+      state_ = AppState::Settings;
+      mainMenu_->Close();
     } else if (act == MainMenuAction::Exit) {
       running_ = false;
     }
-    if (IsKeyPressed(KEY_ESCAPE)) running_ = false;
     return;
   }
 
   if (IsKeyPressed(KEY_ESCAPE)) {
+    // ESC = back only, never quit
     if (inv_ && inv_->IsOpen()) { inv_->Toggle(); return; }
     if (phone_ && phone_->IsOpen()) { phone_->Close(); return; }
     if (garage3d_ && garage3d_->IsOpen()) { garage3d_->Close(); return; }
-    if (state_ == AppState::CharacterCreate) {
+    if (state_ == AppState::Settings || state_ == AppState::Shop ||
+        state_ == AppState::Houses || state_ == AppState::Travel ||
+        state_ == AppState::CharacterCreate) {
       state_ = AppState::MainMenu;
       if (mainMenu_) mainMenu_->Open(saves_ && saves_->Exists());
       return;
     }
-    if (state_ == AppState::Playing) state_ = AppState::Pause;
-    else if (state_ == AppState::Pause) state_ = AppState::Playing;
+    if (state_ == AppState::Pause) { state_ = AppState::Playing; return; }
+    if (state_ == AppState::Playing) { state_ = AppState::Pause; return; }
+    if (state_ == AppState::MainMenu) { /* stay */ return; }
   }
 
   if (state_ == AppState::CharacterCreate) {
@@ -221,6 +226,16 @@ void Application::Draw() {
     return;
   }
 
+  if (state_ == AppState::Settings) {
+    if (ui_) ui_->DrawSettings();
+    if (cursor_) { cursor_->Update(dt_); cursor_->Draw(); }
+    return;
+  }
+  if (state_ == AppState::Shop || state_ == AppState::Houses || state_ == AppState::Travel) {
+    if (ui_) ui_->DrawShop((int)state_);
+    if (cursor_) { cursor_->Update(dt_); cursor_->Draw(); }
+    return;
+  }
   if (state_ == AppState::CharacterCreate) {
     if (ui_) ui_->DrawCharacterCreator();
     if (cursor_) { cursor_->Update(dt_); cursor_->Draw(); }

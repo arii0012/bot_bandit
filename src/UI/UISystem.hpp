@@ -13,6 +13,8 @@ public:
   void Update(float dt);
   void Draw();
   void DrawCharacterCreator();
+  void DrawSettings();
+  void DrawShop(int mode); // Shop/Houses/Travel via AppState cast
   void ToggleRadial();
   bool RadialOpen() const { return radialOpen_; }
 
@@ -26,6 +28,11 @@ private:
   float radialAnim_ = 0.f;
   std::string toastMsg_;
   float toastTimer_ = 0.f;
+  float volMusic_ = 0.8f;
+  float volSfx_ = 0.9f;
+  float brightness_ = 1.f;
+  float camSens_ = 1.f;
+  bool shadersOn_ = true;
 
   bool modalOpen_ = false;
   std::string modalTitle_;

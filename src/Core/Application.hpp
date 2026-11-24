@@ -26,7 +26,11 @@ class Mechanics20;
 enum class AppState {
   Boot,
   MainMenu,
+  Settings,
   CharacterCreate,
+  Shop,
+  Houses,
+  Travel,
   Playing,
   Pause,
   Console
