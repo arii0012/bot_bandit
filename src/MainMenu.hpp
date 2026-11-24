@@ -3,6 +3,7 @@
 #include "UITheme.hpp"
 #include "CustomCursor.hpp"
 #include "Core/FontUI.hpp"
+#include "UI/LiquidGlassUI.hpp"
 #include <cmath>
 #include <string>
 
@@ -115,8 +116,12 @@ public:
       if (!primary_[i]) {
         fill = h ? Color{55, 55, 78, 255} : Color{28, 28, 42, 230};
       }
-      DrawRectangleRounded(r, 0.28f, 10, fill);
-      DrawRectangleRoundedLines(r, 0.28f, 10, h ? WHITE : Color{0, 200, 255, 90});
+      DrawRectangleRounded(r, 0.28f, 12, fill);
+      if (h) {
+        Vector2 m = GetMousePosition();
+        DrawRectangleRounded(Rectangle{r.x + (m.x - r.x) - 28.f, r.y, 56.f, r.height}, 0.5f, 8, Fade(WHITE, 0.08f));
+      }
+      DrawRectangleRoundedLines(r, 0.28f, 12, h ? WHITE : Color{0, 200, 255, 90});
       int tw = FontUI::Get().Measure(labels_[i], 22);
       FontUI::Get().Draw(labels_[i], r.x + (r.width - tw) * 0.5f, r.y + (r.height - 22) * 0.5f, 22,
                          WHITE);

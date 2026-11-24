@@ -1,5 +1,6 @@
 #include "UISystem.hpp"
 #include "Core/FontUI.hpp"
+#include "UI/LiquidGlassUI.hpp"
 #include "Core/Application.hpp"
 #include "Core/Config.hpp"
 #include "Character/Character.hpp"
@@ -60,6 +61,12 @@ void UISystem::DrawRoundedButton(Rectangle r, const char* label, bool& outHover,
 
 void UISystem::Draw() {
   int sw = app_->ScreenW(), sh = app_->ScreenH();
+  static float islandPulse = 0.f;
+  islandPulse += GetFrameTime() * 2.f;
+  if (toastTimer_ > 0.f)
+    LiquidGlassUI::DynamicIsland(sw, toastMsg_.c_str(), islandPulse);
+  else
+    LiquidGlassUI::DynamicIsland(sw, "BOT BANDIT", islandPulse);
 
   // toast
   if (toastTimer_ > 0) {

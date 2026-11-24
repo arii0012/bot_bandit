@@ -1,0 +1,15 @@
+{
+  "work_pay_mult": 1.0,
+  "rob_risk": 0.35,
+  "heist_risk": 0.55,
+  "bribe_base": 15000,
+  "club_entry": 5000,
+  "vip_entry": 25000,
+  "stim_cost": 15000,
+  "jail_seconds_per_star": 30,
+  "cars": {
+    "Lada Priora": { "price": 450000, "body": "classic" },
+    "BMW 3 Series": { "price": 4500000, "body": "sedan" },
+    "Lamborghini": { "price": 25000000, "body": "hyper" }
+  }
+}
