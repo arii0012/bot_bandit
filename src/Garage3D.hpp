@@ -81,7 +81,7 @@ public:
     DrawRectangleRounded(panel, 0.08f, 10, Color{16, 16, 26, 230});
     DrawRectangleRoundedLines(panel, 0.08f, 10, Color{220, 40, 70, 180});
 
-    std::string car = cars_.empty() ? "-" : cars_[sel_ % cars_.size()];
+    std::string car = cars_.empty() ? "EMPTY - buy car in shop" : cars_[sel_ % cars_.size()];
     FontUI::Get().Draw(car.c_str(), panel.x + 24, panel.y + 14, 22, WHITE);
 
     char stats[128];

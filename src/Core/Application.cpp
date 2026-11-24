@@ -22,6 +22,7 @@
 #include "Garage3D.hpp"
 #include "Mechanics20.hpp"
 #include "Systems/AudioEngine.hpp"
+#include "Systems/TutorialSystem.hpp"
 #include <cstdio>
 #include <algorithm>
 #include <cmath>
@@ -263,8 +264,13 @@ void Application::Draw() {
   if (cutscenes_ && cutscenes_->Active()) cutscenes_->Draw(screenW_, screenH_);
 
   if (state_ == AppState::Playing || state_ == AppState::Pause || state_ == AppState::Console) {
+    static TutorialSystem tutorial;
+    static bool tutStarted = false;
+    if (!tutStarted && state_ == AppState::Playing) { tutorial.Start(); tutStarted = true; }
+    tutorial.Update(dt_);
     DrawHUD();
     if (ui_) ui_->Draw();
+    tutorial.Draw(screenW_, screenH_);
     if (inv_ && inv_->IsOpen()) inv_->Draw(screenW_, screenH_);
     if (phone_ && phone_->IsOpen()) phone_->Draw(screenW_, screenH_);
   }

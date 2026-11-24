@@ -33,6 +33,14 @@ public:
   void StartDriftMode();
   void OpenAuction();
   void RepairProject();
+  void DoClub();
+  void DoClubVip();
+  void DoCasino(int game);
+  void BuyWeapon(int index);
+  void DoFenceSell();
+  void DoStimulant();
+  void DoBribe();
+  void DoSyndicate();
 
 private:
   Application* app_;

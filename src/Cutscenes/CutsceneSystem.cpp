@@ -1,82 +1,79 @@
-#include "CutsceneSystem.hpp"
+#include "Cutscenes/CutsceneSystem.hpp"
 #include "Core/FontUI.hpp"
-#include "raylib.h"
 #include <cmath>
+#include <cstring>
 
-void CutsceneSystem::LoadScript(const std::string& id) {
-  steps_.clear();
-  duration_ = 4.f;
-  if (id == "debut") {
-    duration_ = 5.f;
-    steps_ = {
-      {0.0f, "Новый бандит выходит на сцену...", 1.0f},
-      {1.5f, "Улицы уже знают твоё имя", 1.05f},
-      {3.2f, "Добро пожаловать в UNDERWORLD", 1.1f},
-    };
-  } else if (id == "keys") {
-    duration_ = 4.5f;
-    steps_ = {
-      {0.0f, "Ключи от мечты в твоих руках", 1.0f},
-      {1.8f, "Двигатель рычит. Город ждёт.", 1.12f},
-      {3.2f, "Не подведи тачку.", 1.05f},
-    };
-  } else if (id == "vip") {
-    duration_ = 4.f;
-    steps_ = {
-      {0.0f, "Фейсконтроль...", 1.0f},
-      {1.2f, "Дресс-код ок. Проходи.", 1.08f},
-      {2.8f, "VIP-зона открыта", 1.15f},
-    };
-  } else if (id == "travel") {
-    duration_ = 3.5f;
-    steps_ = {
-      {0.0f, "Междугородний рейс", 1.0f},
-      {1.5f, "Километры асфальта...", 1.06f},
-    };
-  } else if (id == "arrest") {
-    duration_ = 5.f;
-    steps_ = {
-      {0.0f, "МИГАЛКИ. ОБЛАВА.", 1.2f},
-      {1.5f, "Slow-mo. Руки вверх?", 0.95f},
-      {3.2f, "Тепло зашкаливает...", 1.0f},
-    };
-  } else if (id == "mansion") {
-    duration_ = 4.5f;
-    steps_ = {
-      {0.0f, "Новоселье", 1.0f},
-      {1.5f, "Особняк твой. Салют.", 1.1f},
-      {3.0f, "Это только начало империи", 1.05f},
-    };
-  } else if (id == "heist_win") {
-    duration_ = 4.f;
-    steps_ = {
-      {0.0f, "Чисто. Мешки полные.", 1.05f},
-      {1.8f, "Уходи, пока не приехали", 1.0f},
-    };
-  } else {
-    steps_ = {{0.f, id, 1.f}};
-    duration_ = 3.f;
-  }
+void CutsceneSystem::EnsureChapters() {
+  if (!chapters_.empty()) return;
+  chapters_ = {
+    {"debut", "Прибытие", 8.f, {
+      {0.f, 3.f, "Новый город. Новые правила."},
+      {3.f, 6.f, "Здесь всё решает скорость и связи."},
+      {6.f, 8.f, "Добро пожаловать в Underworld."},
+    }},
+    {"first_car", "Первая тачка", 7.f, {
+      {0.f, 3.f, "Ключи в руках. Двигатель рычит."},
+      {3.f, 7.f, "Город стал ближе на одну передачу."},
+    }},
+    {"vip_club", "VIP-клуб", 8.f, {
+      {0.f, 3.f, "Неон, бас, чужие взгляды."},
+      {3.f, 6.f, "Дресс-код пройден. Дверь открыта."},
+      {6.f, 8.f, "Здесь заканчиваются случайности."},
+    }},
+    {"casino_bet", "Крупная ставка", 7.f, {
+      {0.f, 3.f, "Шарик катится. Зал замирает."},
+      {3.f, 7.f, "Удача любит смелых — или богатых."},
+    }},
+    {"syndicate", "Синдикат", 9.f, {
+      {0.f, 3.f, "Районы делят не на карте."},
+      {3.f, 6.f, "Точка за точкой. Кровь за кровь."},
+      {6.f, 9.f, "Синдикат запомнил твоё имя."},
+    }},
+    {"jailbreak", "Побег из КПЗ", 8.f, {
+      {0.f, 3.f, "Решётка. Шаги охраны."},
+      {3.f, 6.f, "Окно узкое, но достаточно широкое."},
+      {6.f, 8.f, "Свобода пахнет бензином."},
+    }},
+    {"mansion", "Особняк", 7.f, {
+      {0.f, 3.f, "Панорамные окна. Тишина внутри."},
+      {3.f, 7.f, "Ты купил не стены — статус."},
+    }},
+    {"finale", "Финал", 10.f, {
+      {0.f, 4.f, "Город больше не чужой."},
+      {4.f, 7.f, "История не заканчивается — она ускоряется."},
+      {7.f, 10.f, "BOT BANDIT: UNDERWORLD"},
+    }},
+  };
 }
 
 void CutsceneSystem::Play(const std::string& id) {
-  id_ = id;
-  t_ = 0.f;
+  EnsureChapters();
+  chapterIndex_ = -1;
+  for (int i = 0; i < (int)chapters_.size(); ++i) {
+    if (id == chapters_[i].id) { chapterIndex_ = i; break; }
+  }
+  if (chapterIndex_ < 0) chapterIndex_ = 0;
   active_ = true;
-  zoom_ = 1.f;
+  t_ = 0.f;
+  duration_ = chapters_[chapterIndex_].duration;
+  title_ = chapters_[chapterIndex_].title;
   currentText_.clear();
-  LoadScript(id);
+  zoom_ = 1.f;
 }
 
 void CutsceneSystem::Update(float dt) {
   if (!active_) return;
+  if (dt > 0.1f) dt = 0.1f;
   t_ += dt;
-  currentText_.clear();
-  zoom_ = 1.f;
-  for (auto& s : steps_) {
-    if (t_ >= s.at) {
-      currentText_ = s.text;
-      zoom_ = s.zoom;
+  zoom_ = 1.f + t_ * 0.02f;
+  if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+    Skip();
+    return;
+  }
+  if (chapterIndex_ >= 0 && chapterIndex_ < (int)chapters_.size()) {
+    currentText_.clear();
+    for (auto& ln : chapters_[chapterIndex_].lines) {
+      if (t_ >= ln.t0 && t_ < ln.t1) { currentText_ = ln.text; break; }
     }
   }
   if (t_ >= duration_) active_ = false;
@@ -84,19 +81,18 @@ void CutsceneSystem::Update(float dt) {
 
 void CutsceneSystem::Draw(int sw, int sh) {
   if (!active_) return;
-  float pulse = sinf(t_ * 3.f) * 0.5f + 0.5f;
-  int bar = (int)(68 + pulse * 6);
+  int bar = static_cast<int>(sh * 0.12f);
   DrawRectangle(0, 0, sw, bar, BLACK);
   DrawRectangle(0, sh - bar, sw, bar, BLACK);
+  DrawRectangle(0, 0, sw, sh, Fade(BLACK, 0.15f + (zoom_ - 1.f) * 0.3f));
 
-  // vignette
-  DrawRectangle(0, 0, sw, sh, Fade(BLACK, 0.12f + (zoom_ - 1.f) * 0.4f));
-
+  FontUI::Get().DrawCentered(title_.c_str(), sw * 0.5f, static_cast<float>(bar - 36), 22,
+                             Color{0, 220, 255, 255});
   if (!currentText_.empty()) {
-    int tw = MeasureText(currentText_.c_str(), 26);
-    DrawTextRu(currentText_.c_str(), (sw - tw) / 2, sh - bar + 20, 26, WHITE);
+    FontUI::Get().DrawCentered(currentText_.c_str(), sw * 0.5f, static_cast<float>(sh - bar + 28), 24, WHITE);
   }
-  // progress
-  float p = Progress();
-  DrawRectangle(0, sh - 4, (int)(sw * p), 4, Color{230, 57, 70, 200});
+  float p = duration_ > 0.f ? t_ / duration_ : 1.f;
+  if (p > 1.f) p = 1.f;
+  DrawRectangle(0, sh - 4, static_cast<int>(sw * p), 4, Color{230, 57, 70, 200});
+  FontUI::Get().Draw("SPACE — пропуск", 24, static_cast<float>(sh - bar + 8), 14, Color{140, 140, 160, 255});
 }

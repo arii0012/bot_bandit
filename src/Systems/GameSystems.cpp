@@ -496,3 +496,116 @@ void GameSystems::RepairProject() {
   }
   ui->Toast("Нет проектных авто (сначала аукцион)");
 }
+
+
+void GameSystems::DoClub() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->Money() < 5000) { ui->Toast("Club entry $5000"); return; }
+  p->AddMoney(-5000);
+  p->SetEnergy(std::min(100, p->Energy() + 25));
+  ui->Toast("Club: energy +25");
+  if (app_->Cutscenes()) app_->Cutscenes()->Play("vip_club");
+}
+
+void GameSystems::DoClubVip() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  bool dress = false;
+  for (auto& c : p->Inv().clothes) {
+    if (c.find("suit") != std::string::npos || c.find("chain") != std::string::npos ||
+        c.find("gold") != std::string::npos) dress = true;
+  }
+  if (!dress) { ui->Toast("VIP dress-code failed"); return; }
+  if (p->Money() < 25000) { ui->Toast("VIP entry $25000"); return; }
+  p->AddMoney(-25000);
+  p->SetEnergy(100);
+  p->AddHeat(-5);
+  ui->Toast("VIP lounge: energy full, heat -5");
+}
+
+void GameSystems::DoCasino(int game) {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  int bet = (game == 3) ? 50000 : 5000;
+  if (p->Money() < bet) { ui->Toast("No money for bet"); return; }
+  p->AddMoney(-bet);
+  int roll = GetRandomValue(0, 100);
+  int win = 0;
+  if (game == 0) win = (roll > 52) ? bet * 2 : 0;
+  else if (game == 1) win = (roll > 48) ? (int)(bet * 1.8f) : 0;
+  else if (game == 2) win = (roll > 70) ? bet * 5 : (roll > 55 ? bet : 0);
+  else win = (roll > 60) ? bet * 3 : 0;
+  p->AddMoney(win);
+  if (win) {
+    ui->Toast("Casino +" + std::to_string(win));
+    if (app_->Cutscenes()) app_->Cutscenes()->Play("casino_bet");
+  } else ui->Toast("Casino lose");
+}
+
+void GameSystems::BuyWeapon(int index) {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  const char* names[] = {"Knife", "Bat", "Pistol", "SMG", "Shotgun"};
+  int prices[] = {5000, 8000, 45000, 120000, 90000};
+  if (index < 0 || index > 4) index = 0;
+  if (p->Money() < prices[index]) { ui->Toast("Need money"); return; }
+  p->AddMoney(-prices[index]);
+  p->Inv().weapons.push_back(names[index]);
+  p->AddHeat(3);
+  ui->Toast(std::string("Bought ") + names[index]);
+}
+
+void GameSystems::DoFenceSell() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->Inv().cars.empty()) { ui->Toast("No cars to fence"); return; }
+  std::string c = p->Inv().cars.back();
+  p->Inv().cars.pop_back();
+  int pay = 30000 + GetRandomValue(0, 50000);
+  p->AddMoney(pay);
+  p->AddHeat(12);
+  p->SetWanted(std::min(5, p->Wanted() + 1));
+  ui->Toast("Fence +" + std::to_string(pay));
+}
+
+void GameSystems::DoStimulant() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->Money() < 15000) { ui->Toast("Stim $15000"); return; }
+  p->AddMoney(-15000);
+  p->SetEnergy(100);
+  p->AddHeat(8);
+  p->SetWanted(std::min(5, p->Wanted() + 1));
+  ui->Toast("Stimulant: energy up, wanted +1");
+}
+
+void GameSystems::DoBribe() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  int stars = p->Wanted();
+  if (stars <= 0) { ui->Toast("No heat"); return; }
+  int cost = 15000 * stars;
+  if (p->Money() < cost) { ui->Toast("Bribe needs $" + std::to_string(cost)); return; }
+  p->AddMoney(-cost);
+  if (GetRandomValue(0, 100) < 60 + p->Skill("charisma") * 5) {
+    p->SetWanted(0);
+    ui->Toast("Bribe success");
+  } else {
+    p->SetWanted(std::min(5, stars + 1));
+    ui->Toast("Bribe failed");
+  }
+}
+
+void GameSystems::DoSyndicate() {
+  auto* p = app_->Player();
+  auto* ui = app_->UI();
+  if (p->Energy() < 20) { ui->Toast("Need energy"); return; }
+  p->SetEnergy(p->Energy() - 20);
+  int gain = 40000 + GetRandomValue(0, 60000);
+  p->AddMoney(gain);
+  p->AddHeat(15);
+  p->SetWanted(std::min(5, p->Wanted() + 2));
+  ui->Toast("Syndicate point +" + std::to_string(gain));
+  if (app_->Cutscenes()) app_->Cutscenes()->Play("syndicate");
+}
