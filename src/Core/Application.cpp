@@ -32,10 +32,9 @@ Application::Application() {
   HideCursor();
 
   assets_ = std::make_unique<AssetManager>();
-  assets_->Init();
+  assets_->LoadAll("assets");
   player_ = std::make_unique<Character>();
   world_ = std::make_unique<World>();
-  world_->Init();
   ui_ = std::make_unique<UISystem>(this);
   console_ = std::make_unique<DevConsole>(this);
   saves_ = std::make_unique<SaveSystem>();

@@ -37,13 +37,13 @@ public:
 
   std::string CryptoTrade(Character& p, bool buy) {
     if (buy) {
-      int spend = std::min((int64_t)50000, p.Money());
+      int spend = static_cast<int>(std::min(static_cast<int64_t>(50000), p.Money()));
       if (spend < 1000) return "No funds";
       p.AddMoney(-spend);
       crypto_ += spend / 100.f * (1.f + GetRandomValue(-10, 20) / 100.f);
       return "Bought crypto";
     }
-    int cash = (int)(crypto_ * 100.f);
+    int cash = static_cast<int>(crypto_ * 100.f);
     crypto_ = 0;
     p.AddMoney(cash);
     return "Sold crypto +$" + std::to_string(cash);
