@@ -83,7 +83,7 @@ void Character::Draw(float x, float y) {
   DrawRectangleRounded(Rectangle{x + 3 * S + legR * 1.1f, hipY + 20 * S, 11 * S, 20 * S}, 0.3f, 4, shade(pants, 0.85f));
   DrawRectangleRounded(Rectangle{x - 14 * S + legL * 1.15f, hipY + 38 * S, 14 * S, 9 * S}, 0.4f, 4, shoes);
   DrawRectangleRounded(Rectangle{x + 1 * S + legR * 1.15f, hipY + 38 * S, 14 * S, 9 * S}, 0.4f, 4, shoes);
-  DrawRectangle(Rectangle{x - 14 * S + legL * 1.15f, hipY + 44 * S, 14 * S, 3 * S}, Color{244, 196, 48, 180});
+  DrawRectangleRec(Rectangle{x - 14 * S + legL * 1.15f, hipY + 44 * S, 14 * S, 3 * S}, Color{244, 196, 48, 180});
 
   // hips / lower torso
   float bodyW = (22.f + fabsf(turn) * 6.f) * S;
@@ -101,7 +101,7 @@ void Character::Draw(float x, float y) {
     DrawRectangleRounded(Rectangle{x + bodyW * 0.35f, torsoY, 8 * S, 34 * S}, 0.15f, 4, Color{50, 40, 35, 255});
   }
   if (suit) {
-    DrawRectangle(Rectangle{x - 2 * S, torsoY + 4 * S, 4 * S, 22 * S}, Color{180, 40, 50, 255});
+    DrawRectangleRec(Rectangle{x - 2 * S, torsoY + 4 * S, 4 * S, 22 * S}, Color{180, 40, 50, 255});
   }
   if (chain) {
     DrawCircleLines((int)x, (int)(torsoY + 14 * S), (int)(9 * S), Color{244, 196, 48, 255});
@@ -139,8 +139,8 @@ void Character::Draw(float x, float y) {
     DrawCircle((int)(hx + 6.2f * S), (int)(hy - 0.8f * S), (int)(0.9f * S), WHITE);
   }
   // brows / mouth
-  DrawRectangle(Rectangle{hx - 9 * S, hy - 6 * S, 7 * S, 1.5f * S}, shade(hairColor_, 0.7f));
-  DrawRectangle(Rectangle{hx + 2 * S, hy - 6 * S, 7 * S, 1.5f * S}, shade(hairColor_, 0.7f));
+  DrawRectangleRec(Rectangle{hx - 9 * S, hy - 6 * S, 7 * S, 1.5f * S}, shade(hairColor_, 0.7f));
+  DrawRectangleRec(Rectangle{hx + 2 * S, hy - 6 * S, 7 * S, 1.5f * S}, shade(hairColor_, 0.7f));
   DrawEllipse((int)hx, (int)(hy + 7 * S), (int)(4 * S), (int)(1.6f * S), shade(skin, 0.75f));
 
   // hair
@@ -158,7 +158,7 @@ void Character::Draw(float x, float y) {
     DrawCircle((int)(hx + 8 * S), (int)(hy + 16 * S), (int)(6 * S), hair);
   } else if (hairStyle_ % 5 == 4) {
     for (int i = -2; i <= 2; ++i)
-      DrawRectangle(Rectangle{hx + i * 4 * S - 2 * S, hy - 18 * S, 3 * S, 10 * S}, hair);
+      DrawRectangleRec(Rectangle{hx + i * 4 * S - 2 * S, hy - 18 * S, 3 * S, 10 * S}, hair);
   }
   if (bandana) {
     DrawRectangleRounded(Rectangle{hx - 14 * S, hy - 4 * S, 28 * S, 7 * S}, 0.2f, 3, Color{190, 35, 40, 255});
@@ -172,12 +172,53 @@ void Character::Draw(float x, float y) {
   // weapon
   if (!inv_.weapons.empty()) {
     DrawRectangleRounded(Rectangle{x + bodyW * 0.5f, torsoY + 18 * S + armR, 7 * S, 24 * S}, 0.15f, 3, Color{45, 45, 52, 255});
-    DrawRectangle(Rectangle{x + bodyW * 0.5f + 1 * S, torsoY + 16 * S + armR, 5 * S, 4 * S}, Color{30, 30, 35, 255});
+    DrawRectangleRec(Rectangle{x + bodyW * 0.5f + 1 * S, torsoY + 16 * S + armR, 5 * S, 4 * S}, Color{30, 30, 35, 255});
   }
 
   // rim light
   DrawCircleLines((int)hx, (int)hy, (int)(16.5f * S), Fade(Color{0, 210, 255, 255}, 0.28f));
   DrawCircleLines((int)x, (int)(y - 4 * S), (int)(26 * S), Fade(Color{220, 40, 80, 255}, 0.12f));
+}
+
+
+void Character::Draw3D(Vector3 pos, float scale) {
+  float t = animTime_;
+  float breath = sinf(t * 2.1f) * 0.03f * scale;
+  float walk = sinf(t * 9.f) * 0.15f * scale;
+  Color skin = female_ ? Color{232, 186, 162, 255} : Color{210, 168, 140, 255};
+  Color shirt = {48, 50, 68, 255};
+  Color pants = {30, 30, 42, 255};
+  Color shoes = {22, 22, 28, 255};
+  for (auto& c : inv_.clothes) {
+    if (c.find("hoodie") != std::string::npos) shirt = {36, 42, 120, 255};
+    if (c.find("jacket") != std::string::npos || c.find("leather") != std::string::npos) shirt = {28, 28, 32, 255};
+    if (c.find("suit") != std::string::npos) { shirt = {24, 24, 32, 255}; pants = {20, 20, 28, 255}; }
+  }
+  // soft contact shadow
+  DrawCylinder(Vector3{pos.x, pos.y + 0.02f, pos.z}, 0.45f * scale, 0.45f * scale, 0.02f, 12, Fade(BLACK, 0.35f));
+  // legs
+  DrawCubeV(Vector3{pos.x - 0.12f * scale, pos.y + 0.35f * scale + walk, pos.z}, Vector3{0.14f * scale, 0.55f * scale, 0.14f * scale}, pants);
+  DrawCubeV(Vector3{pos.x + 0.12f * scale, pos.y + 0.35f * scale - walk, pos.z}, Vector3{0.14f * scale, 0.55f * scale, 0.14f * scale}, pants);
+  DrawCubeV(Vector3{pos.x - 0.12f * scale, pos.y + 0.06f * scale + walk, pos.z + 0.04f * scale}, Vector3{0.16f * scale, 0.08f * scale, 0.22f * scale}, shoes);
+  DrawCubeV(Vector3{pos.x + 0.12f * scale, pos.y + 0.06f * scale - walk, pos.z + 0.04f * scale}, Vector3{0.16f * scale, 0.08f * scale, 0.22f * scale}, shoes);
+  // torso
+  DrawCubeV(Vector3{pos.x, pos.y + 0.95f * scale + breath, pos.z}, Vector3{0.42f * scale, 0.55f * scale, 0.24f * scale}, shirt);
+  // arms
+  DrawCubeV(Vector3{pos.x - 0.32f * scale, pos.y + 0.95f * scale - walk * 0.5f, pos.z}, Vector3{0.12f * scale, 0.45f * scale, 0.12f * scale}, shirt);
+  DrawCubeV(Vector3{pos.x + 0.32f * scale, pos.y + 0.95f * scale + walk * 0.5f, pos.z}, Vector3{0.12f * scale, 0.45f * scale, 0.12f * scale}, shirt);
+  DrawSphere(Vector3{pos.x - 0.32f * scale, pos.y + 0.68f * scale - walk * 0.5f, pos.z}, 0.07f * scale, skin);
+  DrawSphere(Vector3{pos.x + 0.32f * scale, pos.y + 0.68f * scale + walk * 0.5f, pos.z}, 0.07f * scale, skin);
+  // head
+  Vector3 hp{pos.x, pos.y + 1.45f * scale + breath, pos.z};
+  DrawSphere(hp, 0.18f * scale, skin);
+  // hair
+  DrawSphere(Vector3{hp.x, hp.y + 0.08f * scale, hp.z}, 0.17f * scale, hairColor_);
+  // eyes
+  DrawSphere(Vector3{hp.x - 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.14f * scale}, 0.03f * scale, WHITE);
+  DrawSphere(Vector3{hp.x + 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.14f * scale}, 0.03f * scale, WHITE);
+  DrawSphere(Vector3{hp.x - 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.16f * scale}, 0.015f * scale, BLACK);
+  DrawSphere(Vector3{hp.x + 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.16f * scale}, 0.015f * scale, BLACK);
+  // rim-ish outline using slightly larger dark sphere behind - skip in 3D, shader handles
 }
 
 void Character::DrawCar(float x, float y) {
