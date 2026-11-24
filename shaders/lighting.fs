@@ -1,39 +1,46 @@
 #version 330
-in vec3 fragPosition;
 in vec2 fragTexCoord;
 in vec4 fragColor;
+in vec3 fragPosition;
 in vec3 fragNormal;
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 uniform vec3 viewPos;
 uniform vec3 lightDir;
-uniform vec3 lightColor;
-uniform vec3 ambientColor;
-uniform float shininess;
-uniform vec3 pointLightPos;
-uniform vec3 pointLightColor;
-uniform float pointLightIntensity;
-uniform float timeOfDay;
+uniform vec4 ambient;
+uniform float timeOfDay; // 0..24
+uniform int lampCount;
+uniform vec3 lampPos[16];
+uniform vec3 lampColor[16];
+uniform float lampRange[16];
 out vec4 finalColor;
+
 void main() {
   vec4 texel = texture(texture0, fragTexCoord);
-  vec3 albedo = texel.rgb * colDiffuse.rgb * fragColor.rgb;
-  float alpha = texel.a * colDiffuse.a * fragColor.a;
-  float day = clamp(1.0 - abs(timeOfDay - 12.0) / 12.0, 0.15, 1.0);
   vec3 N = normalize(fragNormal);
   vec3 L = normalize(-lightDir);
-  vec3 V = normalize(viewPos - fragPosition);
-  vec3 H = normalize(L + V);
-  float diff = max(dot(N, L), 0.0);
-  float spec = pow(max(dot(N, H), 0.0), max(shininess, 16.0));
-  float rim = pow(1.0 - max(dot(N, V), 0.0), 2.5) * 0.2;
-  vec3 toP = pointLightPos - fragPosition;
-  float dist = length(toP);
-  float atten = pointLightIntensity / (1.0 + dist * dist * 0.05);
-  float pdiff = max(dot(N, normalize(toP)), 0.0) * atten;
-  vec3 ambient = ambientColor * albedo * day;
-  vec3 diffuse = lightColor * diff * albedo * day;
-  vec3 specular = lightColor * spec * 0.4 * albedo;
-  vec3 point = pointLightColor * pdiff * albedo;
-  finalColor = vec4(ambient + diffuse + specular + point + lightColor * rim, alpha);
+  float ndl = max(dot(N, L), 0.0);
+  // day/night ambient tint
+  float night = smoothstep(6.0, 8.0, timeOfDay) * (1.0 - smoothstep(18.0, 20.5, timeOfDay));
+  float isNight = 1.0 - night;
+  vec3 dayAmb = ambient.rgb * 0.9;
+  vec3 nightAmb = vec3(0.05, 0.05, 0.12);
+  vec3 amb = mix(nightAmb, dayAmb, night);
+  vec3 col = texel.rgb * colDiffuse.rgb * fragColor.rgb;
+  vec3 lighting = amb + col * ndl * (0.35 + 0.65 * night);
+  // point lamps
+  for (int i = 0; i < 16; ++i) {
+    if (i >= lampCount) break;
+    vec3 toL = lampPos[i] - fragPosition;
+    float dist = length(toL);
+    float range = max(lampRange[i], 1.0);
+    float atten = clamp(1.0 - dist / range, 0.0, 1.0);
+    atten *= atten;
+    vec3 ldir = normalize(toL);
+    float nd = max(dot(N, ldir), 0.0);
+    lighting += lampColor[i] * atten * (0.4 + 0.6 * nd) * isNight;
+  }
+  // neon boost at night
+  lighting += col * isNight * 0.08;
+  finalColor = vec4(lighting, colDiffuse.a * texel.a * fragColor.a);
 }
