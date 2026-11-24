@@ -34,6 +34,7 @@ set(GAME_SOURCES
   src/main.cpp
   src/Core/Application.cpp
   src/Core/FontUI.cpp
+  src/Core/ResourceManager.cpp
   src/Graphics/AssetManager.cpp
   src/Graphics/ProceduralAssetBuilder.cpp
   src/Graphics/ExhaustParticles.cpp
@@ -113,9 +114,12 @@ add_custom_command(TARGET botbandit POST_BUILD
 )
 
 if(WIN32)
-  add_executable(LifeSim3D_Setup installer/setup_main.cpp)
-  target_include_directories(LifeSim3D_Setup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-  target_link_libraries(LifeSim3D_Setup PRIVATE raylib winmm ole32 uuid shell32 advapi32)
+  add_executable(LifeSim3D_Setup
+    installer/setup_main.cpp
+    installer/win_admin.cpp
+  )
+  target_include_directories(LifeSim3D_Setup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+  target_link_libraries(LifeSim3D_Setup PRIVATE raylib winmm shell32 ole32 uuid advapi32)
   target_compile_features(LifeSim3D_Setup PRIVATE cxx_std_20)
   if(MSVC)
     target_compile_options(LifeSim3D_Setup PRIVATE /W3 /permissive- /utf-8 /EHsc)
