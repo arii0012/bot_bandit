@@ -7,55 +7,40 @@
 #include <string>
 
 enum class MainMenuAction {
-  None,
-  Continue,
-  NewGame,
-  CharacterStudio,
-  Garage3D,
-  Settings,
-  Exit
+  None, Continue, NewGame, CharacterStudio, Garage3D, Settings, Exit
 };
 
 class MainMenu {
 public:
-  void Open(bool hasSave) { visible_ = true; hasSave_ = hasSave; camAngle_ = 0.f; }
+  void Open(bool hasSave) {
+    visible_ = true;
+    hasSave_ = hasSave;
+    camAngle_ = 0.f;
+    hover_ = -1;
+  }
   void Close() { visible_ = false; }
   bool Visible() const { return visible_; }
 
   MainMenuAction Update(float dt, CustomCursor& cursor) {
     if (!visible_) return MainMenuAction::None;
-    camAngle_ += dt * 0.25f;
+    camAngle_ += dt * 0.35f;
     anim_ += dt;
     cursor.Update(dt);
 
     int sw = GetScreenWidth();
     int sh = GetScreenHeight();
-    float bx = 64.f;
-    float by = sh * 0.28f;
-    float bw = 320.f, bh = 48.f, gap = 14.f;
+    BuildLayout(sw, sh);
 
-    auto hit = [&](int i) {
-      Rectangle r = {bx, by + i * (bh + gap), bw, bh};
-      return CheckCollisionPointRec(GetMousePosition(), r);
-    };
-    bool any = false;
-    for (int i = 0; i < 6; ++i) if (hit(i)) { any = true; break; }
-    cursor.SetHover(any);
+    hover_ = -1;
+    Vector2 m = GetMousePosition();
+    for (int i = 0; i < btnCount_; ++i) {
+      if (CheckCollisionPointRec(m, btns_[i])) hover_ = i;
+    }
+    cursor.SetHover(hover_ >= 0);
 
-    int idx = 0;
-    if (hasSave_ && UITheme::GlassButton({bx, by + idx * (bh + gap), bw, bh}, "Continue", true, anim_))
-      return MainMenuAction::Continue;
-    if (hasSave_) idx++;
-    if (UITheme::GlassButton({bx, by + idx++ * (bh + gap), bw, bh}, "New Game", !hasSave_, anim_))
-      return MainMenuAction::NewGame;
-    if (UITheme::GlassButton({bx, by + idx++ * (bh + gap), bw, bh}, "Character Studio", false, anim_))
-      return MainMenuAction::CharacterStudio;
-    if (UITheme::GlassButton({bx, by + idx++ * (bh + gap), bw, bh}, "3D Garage", false, anim_))
-      return MainMenuAction::Garage3D;
-    if (UITheme::GlassButton({bx, by + idx++ * (bh + gap), bw, bh}, "Settings", false, anim_))
-      return MainMenuAction::Settings;
-    if (UITheme::GlassButton({bx, by + idx++ * (bh + gap), bw, bh}, "Exit", false, anim_))
-      return MainMenuAction::Exit;
+    if (hover_ >= 0 && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+      return actions_[hover_];
+    }
     return MainMenuAction::None;
   }
 
@@ -63,38 +48,107 @@ public:
     if (!visible_) return;
     int sw = GetScreenWidth();
     int sh = GetScreenHeight();
+    BuildLayout(sw, sh);
 
-    // faux 3D city orbit background
-    DrawRectangle(0, 0, sw, sh, UITheme::Bg());
-    float cx = sw * 0.62f, cy = sh * 0.55f;
-    for (int i = 0; i < 18; ++i) {
-      float a = camAngle_ + i * 0.35f;
-      float d = 80.f + (i % 5) * 40.f;
-      float x = cx + cosf(a) * d * 1.4f;
-      float y = cy + sinf(a * 0.7f) * 30.f - (i % 4) * 20.f;
-      float h = 60.f + (i * 37) % 140;
-      Color b = {(unsigned char)(20 + i * 3), 22, (unsigned char)(30 + i * 2), 255};
-      DrawRectangle((int)x, (int)(y - h), 28 + (i % 3) * 10, (int)h, b);
-      if ((i + (int)(camAngle_ * 3)) % 4 == 0)
-        DrawRectangle((int)x + 6, (int)(y - h + 12), 8, 8, Fade(UITheme::Gold(), 0.5f));
+    // night sky
+    DrawRectangle(0, 0, sw, sh, Color{6, 6, 12, 255});
+    for (int i = 0; i < 60; ++i) {
+      float sx = fmodf(i * 97.3f + camAngle_ * 8.f, (float)sw);
+      float sy = fmodf(i * 53.1f, sh * 0.45f);
+      DrawPixel((int)sx, (int)sy, Color{180, 180, 220, 200});
     }
-    DrawEllipse((int)cx, (int)(cy + 40), 220, 28, Fade(BLACK, 0.35f));
-    // neon ground ring
-    DrawCircleLines((int)cx, (int)(cy + 20), 90 + sinf(anim_ * 2.f) * 4.f, Fade(UITheme::Accent2(), 0.4f));
-    DrawCircleLines((int)cx, (int)(cy + 20), 120, Fade(UITheme::Accent(), 0.25f));
 
-    UITheme::Title("BOT BANDIT", 64, 48, 42);
-    UITheme::Caption("UNDERWORLD", 68, 98, 20);
-    UITheme::Caption("Main Menu", 68, 128, 16);
+    // 3D-ish city parallax blocks
+    float cx = sw * 0.58f, cy = sh * 0.62f;
+    for (int layer = 0; layer < 3; ++layer) {
+      float depth = 1.f + layer * 0.55f;
+      for (int i = 0; i < 14; ++i) {
+        float a = camAngle_ * (0.2f + layer * 0.08f) + i * 0.45f + layer;
+        float d = (70.f + (i % 5) * 36.f) * depth;
+        float x = cx + cosf(a) * d * 1.35f;
+        float y = cy + sinf(a * 0.55f) * 18.f - layer * 12.f;
+        float h = (50.f + (i * 41 + layer * 17) % 150) / depth;
+        float w = (22.f + (i % 3) * 10.f) * (1.2f - layer * 0.15f);
+        Color b = {(unsigned char)(12 + layer * 8 + i), (unsigned char)(14 + layer * 6),
+                   (unsigned char)(28 + layer * 10 + i * 2), 255};
+        DrawRectangle((int)(x - w * 0.5f), (int)(y - h), (int)w, (int)h, b);
+        if ((i + layer) % 3 == 0) {
+          DrawRectangle((int)(x - w * 0.2f), (int)(y - h + 10), 6, 6,
+                        Color{255, 200, 80, (unsigned char)(120 + layer * 40)});
+        }
+      }
+    }
+    DrawEllipse((int)cx, (int)(cy + 36), 240, 28, Fade(BLACK, 0.4f));
+    DrawCircleLines((int)cx, (int)(cy + 10), 100.f + sinf(anim_ * 2.f) * 4.f,
+                    Color{0, 200, 255, 90});
+    DrawCircleLines((int)cx, (int)(cy + 10), 130.f, Color{220, 40, 80, 70});
 
-    // soft vignette
-    DrawRectangle(0, 0, sw, 40, Fade(BLACK, 0.35f));
-    DrawRectangle(0, sh - 40, sw, 40, Fade(BLACK, 0.45f));
+    // neon car silhouette
+    float carX = cx, carY = cy - 10.f;
+    DrawRectangle((int)(carX - 50), (int)(carY - 12), 100, 24, Color{30, 30, 40, 255});
+    DrawRectangle((int)(carX - 30), (int)(carY - 28), 55, 18, Color{40, 40, 55, 255});
+    DrawRectangle((int)(carX - 48), (int)(carY + 8), 18, 10, Color{20, 20, 25, 255});
+    DrawRectangle((int)(carX + 30), (int)(carY + 8), 18, 10, Color{20, 20, 25, 255});
+    DrawRectangle((int)(carX + 40), (int)(carY - 6), 8, 6, Color{255, 230, 150, 220});
+
+    // title
+    FontUI::Get().DrawNeon("BOT BANDIT", 56, 48, 52, Color{255, 255, 255, 255},
+                           Color{220, 40, 80, 140});
+    FontUI::Get().DrawShadow("UNDERWORLD", 60, 110, 26, Color{0, 220, 255, 255});
+    FontUI::Get().Draw("MAIN MENU", 60, 148, 16, Color{140, 140, 160, 255});
+
+    // buttons
+    for (int i = 0; i < btnCount_; ++i) {
+      Rectangle r = btns_[i];
+      bool h = (i == hover_);
+      Color fill = h ? Color{255, 60, 95, 255} : (i == 0 && hasSave_ ? Color{220, 45, 75, 255}
+                                                                    : Color{32, 32, 48, 230});
+      if (!primary_[i]) {
+        fill = h ? Color{55, 55, 78, 255} : Color{28, 28, 42, 230};
+      }
+      DrawRectangleRounded(r, 0.28f, 10, fill);
+      DrawRectangleRoundedLines(r, 0.28f, 10, h ? WHITE : Color{0, 200, 255, 90});
+      int tw = FontUI::Get().Measure(labels_[i], 22);
+      FontUI::Get().Draw(labels_[i], r.x + (r.width - tw) * 0.5f, r.y + (r.height - 22) * 0.5f, 22,
+                         WHITE);
+    }
+
+    DrawRectangle(0, 0, sw, 28, Fade(BLACK, 0.35f));
+    DrawRectangle(0, sh - 36, sw, 36, Fade(BLACK, 0.5f));
+    FontUI::Get().Draw("LMB — select   ESC — quit", 24, (float)sh - 28, 14, Color{120, 120, 140, 255});
   }
 
 private:
+  void BuildLayout(int sw, int sh) {
+    float bx = 56.f;
+    float by = sh * 0.30f;
+    float bw = 340.f, bh = 52.f, gap = 12.f;
+    btnCount_ = 0;
+    auto add = [&](const char* lab, MainMenuAction a, bool prim) {
+      if (btnCount_ >= 8) return;
+      labels_[btnCount_] = lab;
+      actions_[btnCount_] = a;
+      primary_[btnCount_] = prim;
+      btns_[btnCount_] = Rectangle{bx, by + btnCount_ * (bh + gap), bw, bh};
+      btnCount_++;
+    };
+    if (hasSave_) add("CONTINUE", MainMenuAction::Continue, true);
+    add("NEW GAME", MainMenuAction::NewGame, !hasSave_);
+    add("CHARACTER STUDIO", MainMenuAction::CharacterStudio, false);
+    add("3D GARAGE", MainMenuAction::Garage3D, false);
+    add("SETTINGS", MainMenuAction::Settings, false);
+    add("EXIT", MainMenuAction::Exit, false);
+    (void)sw;
+  }
+
   bool visible_ = true;
   bool hasSave_ = false;
   float camAngle_ = 0.f;
   float anim_ = 0.f;
+  int hover_ = -1;
+  int btnCount_ = 0;
+  Rectangle btns_[8]{};
+  const char* labels_[8]{};
+  MainMenuAction actions_[8]{};
+  bool primary_[8]{};
 };
