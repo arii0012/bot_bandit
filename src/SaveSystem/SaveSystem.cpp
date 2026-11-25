@@ -1,74 +1,114 @@
-#include "SaveSystem.hpp"
+#include "SaveSystem/SaveSystem.hpp"
 #include "Character/Character.hpp"
 #include "World/World.hpp"
-#include <nlohmann/json.hpp>
+#include "Systems/ReputationScales.hpp"
+#include "raylib.h"
+#include <cstdio>
 #include <fstream>
-#include <filesystem>
-
-namespace fs = std::filesystem;
-using json = nlohmann::json;
+#include <sstream>
+#include <string>
 
 bool SaveSystem::Exists() const {
-  return fs::exists(Path());
+  return FileExists(Path().c_str());
 }
 
 bool SaveSystem::Save(const Character& p, const World& w) {
-  fs::create_directories("data");
-  json j;
-  j["name"] = p.Name();
-  j["money"] = p.Money();
-  j["level"] = p.Level();
-  j["exp"] = p.Exp();
-  j["energy"] = p.Energy();
-  j["heat"] = p.Heat();
-  j["wanted"] = p.Wanted();
-  j["strength"] = p.Strength();
-  j["agility"] = p.Agility();
-  j["intelligence"] = p.Intelligence();
-  j["city"] = w.CurrentCityId();
-  j["female"] = p.GenderFemale();
-  j["hairStyle"] = p.HairStyle();
-  j["skills"] = p.skills_;
-  j["materials"] = p.Inv().materials;
-  j["weapons"] = p.Inv().weapons;
-  j["items"] = p.Inv().items;
-  j["cars"] = p.Inv().cars;
-  j["activeCar"] = p.ActiveCar();
+  MakeDirectory("data");
+  std::string tmp = Path() + ".tmp";
+  std::ostringstream o;
+  o << "{\n";
+  o << "  \"money\": " << p.Money() << ",\n";
+  o << "  \"energy\": " << p.Energy() << ",\n";
+  o << "  \"level\": " << p.Level() << ",\n";
+  o << "  \"wanted\": " << p.Wanted() << ",\n";
+  o << "  \"heat\": " << p.Heat() << ",\n";
+  o << "  \"city\": \"" << w.CurrentCityId() << "\",\n";
+  o << "  \"street\": " << ReputationScales::Get().Street() << ",\n";
+  o << "  \"system\": " << ReputationScales::Get().System() << ",\n";
+  o << "  \"debt\": " << ReputationScales::Get().Debt() << ",\n";
+  o << "  \"cars\": [";
+  bool first = true;
+  for (auto& c : p.Inv().cars) {
+    if (!first) o << ",";
+    o << "\"" << c << "\"";
+    first = false;
+  }
+  o << "],\n  \"houses\": [";
+  first = true;
+  for (auto& h : p.Inv().houses) {
+    if (!first) o << ",";
+    o << "\"" << h << "\"";
+    first = false;
+  }
+  o << "]\n}\n";
 
-  std::ofstream f(Path());
+  std::ofstream f(tmp, std::ios::binary);
   if (!f) return false;
-  f << j.dump(2);
-  return true;
+  f << o.str();
+  f.close();
+  // atomic replace
+  std::remove(Path().c_str());
+  if (std::rename(tmp.c_str(), Path().c_str()) != 0) {
+    // fallback copy
+    std::ifstream in(tmp, std::ios::binary);
+    std::ofstream out(Path(), std::ios::binary);
+    out << in.rdbuf();
+    std::remove(tmp.c_str());
+  }
+  return FileExists(Path().c_str());
+}
+
+static int ParseIntField(const std::string& s, const char* key, int def) {
+  auto pos = s.find(key);
+  if (pos == std::string::npos) return def;
+  pos = s.find(':', pos);
+  if (pos == std::string::npos) return def;
+  return atoi(s.c_str() + pos + 1);
+}
+
+static long long ParseLLField(const std::string& s, const char* key, long long def) {
+  auto pos = s.find(key);
+  if (pos == std::string::npos) return def;
+  pos = s.find(':', pos);
+  if (pos == std::string::npos) return def;
+  return atoll(s.c_str() + pos + 1);
 }
 
 bool SaveSystem::Load(Character& p, World& w) {
-  std::ifstream f(Path());
-  if (!f) return false;
-  json j;
-  try { f >> j; } catch (...) { return false; }
+  if (!Exists()) return false;
+  char* txt = LoadFileText(Path().c_str());
+  if (!txt) return false;
+  std::string s(txt);
+  UnloadFileText(txt);
 
-  if (j.contains("name")) p.SetName(j["name"].get<std::string>());
-  if (j.contains("money")) p.money_ = j["money"].get<int64_t>();
-  if (j.contains("level")) p.level_ = j["level"].get<int>();
-  if (j.contains("exp")) p.exp_ = j["exp"].get<int>();
-  if (j.contains("energy")) p.energy_ = j["energy"].get<int>();
-  if (j.contains("heat")) p.heat_ = j["heat"].get<int>();
-  if (j.contains("wanted")) p.wanted_ = j["wanted"].get<int>();
-  if (j.contains("strength")) p.strength_ = j["strength"].get<int>();
-  if (j.contains("agility")) p.agility_ = j["agility"].get<int>();
-  if (j.contains("intelligence")) p.intelligence_ = j["intelligence"].get<int>();
-  if (j.contains("city")) {
-    std::string cid = j["city"].get<std::string>();
-    w.SetCity(cid);
-    p.SetCity(cid);
+  p.AddMoney(ParseLLField(s, "\"money\"", p.Money()) - p.Money());
+  // set energy via public API
+  int en = ParseIntField(s, "\"energy\"", p.Energy());
+  p.SetEnergy(en);
+  int wanted = ParseIntField(s, "\"wanted\"", 0);
+  p.SetWanted(wanted);
+  // heat - AddHeat relative
+  int heat = ParseIntField(s, "\"heat\"", 0);
+  if (p.Heat() < heat) p.AddHeat(heat - p.Heat());
+
+  int street = ParseIntField(s, "\"street\"", 0);
+  int system = ParseIntField(s, "\"system\"", 0);
+  int debt = ParseIntField(s, "\"debt\"", 0);
+  ReputationScales::Get().Reset();
+  ReputationScales::Get().AddStreet(street);
+  ReputationScales::Get().AddSystem(system);
+  ReputationScales::Get().AddDebt(debt);
+
+  // city
+  auto cpos = s.find("\"city\"");
+  if (cpos != std::string::npos) {
+    auto q1 = s.find('"', cpos + 6);
+    auto q2 = s.find('"', q1 + 1);
+    if (q1 != std::string::npos && q2 != std::string::npos) {
+      std::string city = s.substr(q1 + 1, q2 - q1 - 1);
+      w.SetCity(city);
+      p.SetCity(city);
+    }
   }
-  if (j.contains("female")) p.SetFemale(j["female"].get<bool>());
-  if (j.contains("hairStyle")) p.SetHairStyle(j["hairStyle"].get<int>());
-  if (j.contains("skills")) p.skills_ = j["skills"].get<std::map<std::string,int>>();
-  if (j.contains("materials")) p.Inv().materials = j["materials"].get<std::map<std::string,int>>();
-  if (j.contains("weapons")) p.Inv().weapons = j["weapons"].get<std::vector<std::string>>();
-  if (j.contains("items")) p.Inv().items = j["items"].get<std::vector<std::string>>();
-  if (j.contains("cars")) p.Inv().cars = j["cars"].get<std::vector<std::string>>();
-  if (j.contains("activeCar")) p.SetActiveCar(j["activeCar"].get<std::string>());
   return true;
 }

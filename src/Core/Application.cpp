@@ -32,6 +32,8 @@
 #include "Minigames/StoryMinigames.hpp"
 #include "Systems/LifeSystems.hpp"
 #include "Systems/QuestSystem.hpp"
+#include "Systems/PoliceSystem.hpp"
+#include "Systems/CrimeAndRacketSystem.hpp"
 #include "UI/TravelScreen.hpp"
 #include "UI/ShopScreen.hpp"
 #include "Vehicles/VehicleDeepSystem.hpp"
@@ -335,6 +337,9 @@ void Application::Draw() {
     static TravelScreen travel;
     static ShopScreen shop;
     static VehicleDeepSystem vehicleDeep;
+    static PoliceSystem police;
+    static CrimeAndRacketSystem crimeNet;
+    
     static bool tutStarted = false;
     if (!tutStarted && state_ == AppState::Playing) {
       tutorial.Start();
@@ -356,6 +361,10 @@ void Application::Draw() {
       if (IsKeyPressed(KEY_R)) { radio.NextWave(); AudioEngine::Get().NextRadio(); }
       if (IsKeyPressed(KEY_J)) QuestSystem::Get().ToggleJournal();
       QuestSystem::Get().PollBlackSwan(dt_);
+      crimeNet.TickHotTimer(dt_);
+      if (state_ == AppState::Playing && player_) {
+        police.Update(dt_, *player_, screenW_, screenH_, crimeNet, jail);
+      }
       QuestSystem::Get().ApplyPendingReward(*player_);
     }
     dialogue.Update(dt_);
@@ -393,6 +402,10 @@ void Application::Draw() {
       family.Draw(screenW_);
       QuestSystem::Get().DrawJournal(screenW_, screenH_);
       QuestSystem::Get().DrawSwan(screenW_);
+      if (state_ == AppState::Playing) {
+        police.Draw();
+        crimeNet.DrawHUD(12.f, 58.f);
+      }
       if (shop.IsOpen()) shop.Draw(screenW_, screenH_, *player_);
       if (travel.IsOpen() && world_) travel.Draw(screenW_, screenH_, *world_);
       if (garage3d_ && garage3d_->IsOpen()) vehicleDeep.DrawGarageStats(40, 100);
