@@ -339,3 +339,8 @@ void UISystem::DrawShop(int mode) {
     }
   }
 }
+
+void UISystem::OpenShop() {
+  Toast("Magazin otkryt");
+  // shop panel uses existing shop UI if any
+}

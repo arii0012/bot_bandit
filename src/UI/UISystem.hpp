@@ -19,6 +19,7 @@ public:
   bool RadialOpen() const { return radialOpen_; }
 
   void Toast(const std::string& msg);
+  void OpenShop();
   void Modal(const std::string& title, const std::vector<std::string>& options,
              std::function<void(int)> onSelect);
 

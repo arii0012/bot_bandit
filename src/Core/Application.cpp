@@ -24,6 +24,11 @@
 #include "Systems/AudioEngine.hpp"
 #include "Graphics/ModelStore.hpp"
 #include "Systems/TutorialSystem.hpp"
+#include "Systems/TutorialOverlay.hpp"
+#include "UI/ActionPanel.hpp"
+#include "Systems/DialogueSystem.hpp"
+#include "Systems/StoryDirector.hpp"
+#include "Systems/ReputationScales.hpp"
 #include "Minigames/MinigamesSuite.hpp"
 #include "Systems/ArrestAndJailSystem.hpp"
 #include "Core/ProfilerOverlay.hpp"
@@ -195,7 +200,7 @@ void Application::Update() {
       else DifficultySystem::Get().Set(Difficulty::Street);
       player_ = std::make_unique<Character>();
       DifficultySystem::Get().ApplyNewGame(*player_);
-      if (cutscenes_) cutscenes_->Play("ch1_cold_start");
+      StoryDirector::Get().StartAct1Intro(cutscenes_.get());
       state_ = AppState::CharacterCreate;
       mainMenu_->Close();
     } else if (act == MainMenuAction::CharacterStudio) {
@@ -310,12 +315,53 @@ void Application::Draw() {
 
   if (state_ == AppState::Playing || state_ == AppState::Pause || state_ == AppState::Console) {
     static TutorialSystem tutorial;
+    static TutorialOverlay tutOverlay;
+    static ActionPanel actionPanel;
+    static DialogueSystem dialogue;
     static bool tutStarted = false;
-    if (!tutStarted && state_ == AppState::Playing) { tutorial.Start(); tutStarted = true; }
+    if (!tutStarted && state_ == AppState::Playing) {
+      tutorial.Start();
+      tutOverlay.Start();
+      tutStarted = true;
+    }
     tutorial.Update(dt_);
+    tutOverlay.Update(dt_);
+    StoryDirector::Get().Poll(dialogue);
+    dialogue.Update(dt_);
+    if (state_ == AppState::Playing && player_ && !tutOverlay.Active()) {
+      actionPanel.SetHighlight(ActionId::Count, false);
+    } else if (tutOverlay.Active()) {
+      actionPanel.SetHighlight(tutOverlay.HighlightAction(), true);
+    }
+    if (state_ == AppState::Playing && player_) {
+      ActionId act = actionPanel.Update(*player_, static_cast<float>(GetTime()));
+      if (act == ActionId::Work && systems_) systems_->DoWork(0);
+      if (act == ActionId::Rob && systems_) systems_->DoRob();
+      if (act == ActionId::Fence && systems_) systems_->DoFenceSell();
+      if (act == ActionId::LayLow && systems_) systems_->DoHide();
+      if (act == ActionId::Rest) {
+        player_->SetEnergy(100);
+        if (ui_) ui_->Toast("Otdyh: EN polnaya");
+      }
+      if (act == ActionId::Shop && ui_) ui_->OpenShop();
+    }
     DrawHUD();
     if (ui_) ui_->Draw();
     tutorial.Draw(screenW_, screenH_);
+    if (state_ == AppState::Playing && player_) {
+      actionPanel.Draw(*player_, static_cast<float>(GetTime()), screenW_, screenH_);
+      tutOverlay.Draw(screenW_, screenH_);
+      dialogue.Draw(screenW_, screenH_);
+      // scales mini
+      if (player_) {
+        char sc[80];
+        snprintf(sc, sizeof(sc), "Ulica %d  Sistema %d  Dolg %d",
+                 ReputationScales::Get().Street(),
+                 ReputationScales::Get().System(),
+                 ReputationScales::Get().Debt());
+        FontUI::Get().Draw(sc, 12, 40, 14, Color{160, 160, 180, 255});
+      }
+    }
     if (inv_ && inv_->IsOpen()) inv_->Draw(screenW_, screenH_);
     if (phone_ && phone_->IsOpen()) phone_->Draw(screenW_, screenH_);
   }
