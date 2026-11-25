@@ -42,6 +42,24 @@ public:
   Texture2D& Fabric() { return fabric_; }
   Texture2D& Metal() { return metal_; }
 
+  Texture2D* TryLoad(const std::string& path) {
+    auto it = cache_.find(path);
+    if (it != cache_.end()) return &it->second;
+    if (!FileExists(path.c_str())) return nullptr;
+    Texture2D tex = LoadTexture(path.c_str());
+    if (tex.id == 0) return nullptr;
+    GenTextureMipmaps(&tex);
+    SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
+    cache_[path] = tex;
+    return &cache_[path];
+  }
+
+  Texture2D* Face() { return TryLoad("assets/characters/square/face.png"); }
+  Texture2D* Torso() { return TryLoad("assets/characters/square/torso.png"); }
+  Texture2D* Arm() { return TryLoad("assets/characters/square/arm.png"); }
+  Texture2D* Leg() { return TryLoad("assets/characters/square/leg.png"); }
+
+
 private:
   static Texture2D MakeBrick(int w, int h) {
     Image img = GenImageColor(w, h, Color{90, 50, 40, 255});
