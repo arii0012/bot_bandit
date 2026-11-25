@@ -1,89 +1,71 @@
 #include "Character/CharacterCreator.hpp"
 #include "Core/FontUI.hpp"
+#include "raylib.h"
+#include <string>
 #include <cstdio>
 
-void CharacterCreator::Open(Character& p) {
+void CharacterCreator::Open(Character* p) {
+  player_ = p;
   open_ = true;
-  confirmed_ = false;
   tab_ = 0;
-  spin_ = p.Facing();
-  (void)p;
+  spin_ = 0.f;
 }
 
-void CharacterCreator::Update(float dt, Character& p) {
-  if (!open_) return;
-  spin_ += dt * 0.35f;
-  p.SetFacing(spin_);
-  p.Update(dt);
+void CharacterCreator::Close() { open_ = false; }
+bool CharacterCreator::IsOpen() const { return open_; }
 
-  if (IsKeyPressed(KEY_TAB)) tab_ = (tab_ + 1) % 4;
-  if (IsKeyPressed(KEY_Q)) p.SetHairStyle((p.HairStyle() + 7) % 8);
-  if (IsKeyPressed(KEY_E)) p.SetHairStyle((p.HairStyle() + 1) % 8);
-  if (IsKeyPressed(KEY_ONE)) p.SetFemale(false);
-  if (IsKeyPressed(KEY_TWO)) p.SetFemale(true);
-  if (IsKeyPressed(KEY_ENTER)) {
-    confirmed_ = true;
-    open_ = false;
-  }
-}
-
-void CharacterCreator::Draw(Character& p, int sw, int sh) {
-  if (!open_) return;
-  DrawRectangle(0, 0, sw, sh, Color{8, 8, 14, 255});
-
-  float cx = sw * 0.58f, cy = sh * 0.52f;
-  DrawEllipse((int)cx, (int)(cy + 95), 110, 28, Fade(Color{220, 40, 70, 255}, 0.3f));
-  DrawEllipse((int)cx, (int)(cy + 95), 80, 18, Fade(Color{0, 200, 255, 255}, 0.2f));
-  p.Draw(cx, cy);
-
-  FontUI::Get().DrawNeon("CHARACTER STUDIO", 40, 28, 30, WHITE, Color{220, 40, 80, 120});
-  FontUI::Get().Draw("1/2 gender   Q/E hair   TAB tabs   ENTER start", 40, 68, 16, Color{150, 150, 170, 255});
-
-  float px = 36, py = 110;
-  auto btn = [&](Rectangle r, const char* lab, bool on) -> bool {
-    bool h = CheckCollisionPointRec(GetMousePosition(), r);
-    DrawRectangleRounded(r, 0.22f, 8, on || h ? Color{220, 45, 75, 255} : Color{32, 32, 48, 255});
-    DrawRectangleRoundedLines(r, 0.22f, 8, Color{0, 200, 255, 100});
-    int tw = FontUI::Get().Measure(lab, 16);
-    FontUI::Get().Draw(lab, r.x + (r.width - tw) * 0.5f, r.y + 10, 16, WHITE);
-    return h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+static Color Palette(int i) {
+  static Color cols[] = {
+    {40,30,20,255},{20,20,25,255},{180,40,40,255},{40,80,180,255},
+    {40,140,60,255},{220,180,40,255},{200,200,210,255},{120,40,160,255},
+    {230,120,160,255},{90,60,40,255},{0,200,255,255},{255,100,40,255}
   };
+  return cols[i % 12];
+}
 
-  FontUI::Get().Draw("GENDER", px, py, 16, Color{140, 140, 160, 255});
-  if (btn(Rectangle{px, py + 22, 100, 36}, "MALE", !p.GenderFemale())) p.SetFemale(false);
-  if (btn(Rectangle{px + 110, py + 22, 100, 36}, "FEMALE", p.GenderFemale())) p.SetFemale(true);
+void CharacterCreator::Update(float dt) {
+  if (!open_ || !player_) return;
+  spin_ += dt * 0.6f;
+  if (IsKeyPressed(KEY_TAB)) tab_ = (tab_ + 1) % 8;
+  if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) sel_ = (sel_ + 11) % 12;
+  if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) sel_ = (sel_ + 1) % 12;
+  if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+    Color c = Palette(sel_);
+    switch (tab_) {
+      case 0: player_->SetFemale(sel_ % 2 == 1); break;
+      case 1: player_->colorEyes_ = c; break;
+      case 2: player_->hairColor_ = c; player_->hairStyle_ = sel_ % 12; break;
+      case 3: player_->colorTop_ = c; player_->topStyle_ = sel_ % 6; break;
+      case 4: player_->colorPants_ = c; player_->pantsStyle_ = sel_ % 6; break;
+      case 5: player_->colorHat_ = c; player_->hatStyle_ = sel_ % 6; break;
+      case 6: player_->colorShoes_ = c; player_->shoeStyle_ = sel_ % 6; break;
+      case 7: player_->colorAcc_ = c; player_->accStyle_ = sel_ % 6; break;
+    }
+  }
+  if (IsKeyPressed(KEY_ESCAPE)) Close();
+}
 
-  FontUI::Get().Draw("HAIR", px, py + 80, 16, Color{140, 140, 160, 255});
-  if (btn(Rectangle{px, py + 102, 80, 34}, "PREV", false)) p.SetHairStyle((p.HairStyle() + 7) % 8);
-  if (btn(Rectangle{px + 90, py + 102, 80, 34}, "NEXT", false)) p.SetHairStyle((p.HairStyle() + 1) % 8);
-
-  Color cols[] = {{30, 25, 20, 255}, {220, 200, 120, 255}, {160, 40, 40, 255}, {40, 40, 50, 255}, {90, 60, 40, 255}, {200, 200, 210, 255}};
-  for (int i = 0; i < 6; ++i) {
-    Rectangle r{px + i * 42.f, py + 150, 36, 36};
-    DrawRectangleRounded(r, 0.2f, 6, cols[i]);
-    if (CheckCollisionPointRec(GetMousePosition(), r) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-      p.SetHairColor(cols[i]);
+void CharacterCreator::Draw(int sw, int sh) {
+  if (!open_ || !player_) return;
+  DrawRectangle(0, 0, sw, sh, Color{10, 10, 18, 240});
+  FontUI::Get().Draw("STUDIA 360", 40, 24, 28, WHITE);
+  const char* tabs[] = {"Pol", "Glaza", "Volosy", "Tors", "Shtany", "Golova", "Obuv", "Aksess"};
+  for (int i = 0; i < 8; ++i) {
+    Rectangle r{40.f + i * 100.f, 60.f, 94.f, 28.f};
+    DrawRectangleRounded(r, 0.2f, 6, i == tab_ ? Color{255, 55, 95, 255} : Color{32, 32, 48, 255});
+    FontUI::Get().DrawCentered(tabs[i], r.x + r.width * 0.5f, r.y + 6.f, 13, WHITE);
   }
-
-  FontUI::Get().Draw("PRESETS", px, py + 210, 16, Color{140, 140, 160, 255});
-  if (btn(Rectangle{px, py + 232, 120, 34}, "Street", false)) {
-    p.SetFemale(false); p.SetHairStyle(0); p.SetHairColor(cols[0]);
+  // preview
+  float cx = sw * 0.7f, cy = sh * 0.5f;
+  player_->facingAngle_ = spin_;
+  player_->Draw(cx, cy);
+  // palette
+  for (int i = 0; i < 12; ++i) {
+    Rectangle r{40.f + (i % 6) * 50.f, 120.f + (i / 6) * 50.f, 42.f, 42.f};
+    DrawRectangleRec(r, Palette(i));
+    if (i == sel_) DrawRectangleLinesEx(r, 2.f, WHITE);
   }
-  if (btn(Rectangle{px + 130, py + 232, 120, 34}, "VIP", false)) {
-    p.SetFemale(false); p.SetHairStyle(1); p.SetHairColor(cols[3]);
-  }
-  if (btn(Rectangle{px, py + 274, 120, 34}, "Model", false)) {
-    p.SetFemale(true); p.SetHairStyle(3); p.SetHairColor(cols[1]);
-  }
-  if (btn(Rectangle{px + 130, py + 274, 120, 34}, "Random", false)) {
-    p.SetFemale(GetRandomValue(0, 1) == 1);
-    p.SetHairStyle(GetRandomValue(0, 7));
-    p.SetHairColor(cols[GetRandomValue(0, 5)]);
-  }
-
-  Rectangle start{(float)sw * 0.5f - 120.f, (float)sh - 80.f, 240.f, 50.f};
-  if (btn(start, "START GAME", true)) {
-    confirmed_ = true;
-    open_ = false;
-  }
+  FontUI::Get().Draw("TAB - vkladka  A/D - cvet  ENTER - primenit  ESC - nazad", 40, sh - 40.f, 14,
+                     Color{140, 140, 160, 255});
+  FontUI::Get().Draw(player_->Female() ? "Zhenskaya model" : "Muzhskaya model", 40, 230, 16, Color{0, 220, 255, 255});
 }

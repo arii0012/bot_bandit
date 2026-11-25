@@ -49,9 +49,9 @@ void Character::Draw(float x, float y) {
       c.a};
   };
   Color skinD = shade(skin, 0.72f);
-  Color shirt = {48, 50, 68, 255};
-  Color pants = {30, 30, 42, 255};
-  Color shoes = {22, 22, 28, 255};
+  Color shirt = colorTop_;
+  Color pants = colorPants_;
+  Color shoes = colorShoes_;
   bool hoodie = false, jacket = false, suit = false, glasses = false, chain = false, bandana = false;
   for (auto& c : inv_.clothes) {
     if (c.find("hoodie") != std::string::npos || c.find("hudi") != std::string::npos) {
@@ -198,9 +198,9 @@ void Character::Draw3D(Vector3 pos, float scale) {
   float breath = sinf(t * 2.1f) * 0.03f * scale;
   float walk = sinf(t * 9.f) * 0.15f * scale;
   Color skin = female_ ? Color{232, 186, 162, 255} : Color{210, 168, 140, 255};
-  Color shirt = {48, 50, 68, 255};
-  Color pants = {30, 30, 42, 255};
-  Color shoes = {22, 22, 28, 255};
+  Color shirt = colorTop_;
+  Color pants = colorPants_;
+  Color shoes = colorShoes_;
   for (auto& c : inv_.clothes) {
     if (c.find("hoodie") != std::string::npos) shirt = {36, 42, 120, 255};
     if (c.find("jacket") != std::string::npos || c.find("leather") != std::string::npos) shirt = {28, 28, 32, 255};

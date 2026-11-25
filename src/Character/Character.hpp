@@ -81,8 +81,22 @@ public:
   std::string cityId_ = "липецк";
   std::string activeCar_;
   bool female_ = false;
-  int hairStyle_ = 0;
   Color hairColor_ = {40, 30, 20, 255};
+  Color colorEyes_ = {40, 80, 140, 255};
+  Color colorTop_ = {48, 50, 68, 255};
+  Color colorPants_ = {30, 30, 42, 255};
+  Color colorHat_ = {40, 40, 48, 255};
+  Color colorShoes_ = {22, 22, 28, 255};
+  Color colorAcc_ = {220, 180, 40, 255};
+  int bodyType_ = 1; // 0 thin 1 athlete 2 heavy
+  int hairStyle_ = 0;
+  int topStyle_ = 0;
+  int pantsStyle_ = 0;
+  int hatStyle_ = 0;
+  int shoeStyle_ = 0;
+  int accStyle_ = 0;
+  Model mesh_{};
+  bool meshLoaded_ = false;
   float animTime_ = 0.f;
   float facingAngle_ = 0.f; // radians, 0 = front
   int engineLvl_ = 0, turboLvl_ = 0;
