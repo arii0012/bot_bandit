@@ -40,6 +40,7 @@ set(GAME_SOURCES
   src/Graphics/ExhaustParticles.cpp
   src/Graphics/Shaders3D.cpp
   src/Graphics/ModelStore.cpp
+  src/Graphics/ArtworkRenderer.cpp
   src/UI/UISystem.cpp
   src/UI/InventoryUI.cpp
   src/Character/Character.cpp
