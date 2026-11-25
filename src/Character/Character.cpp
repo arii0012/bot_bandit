@@ -178,6 +178,18 @@ void Character::Draw(float x, float y) {
   // rim light
   DrawCircleLines((int)hx, (int)hy, (int)(16.5f * S), Fade(Color{0, 210, 255, 255}, 0.28f));
   DrawCircleLines((int)x, (int)(y - 4 * S), (int)(26 * S), Fade(Color{220, 40, 80, 255}, 0.12f));
+  if (dirt_ > 0.05f) {
+    DrawEllipse((int)x, (int)(y + 20 * S), (int)(18 * S * dirt_), (int)(8 * S), Fade(Color{60, 45, 30, 255}, dirt_ * 0.5f));
+  }
+  if (wet_ > 0.05f) {
+    DrawCircleLines((int)hx, (int)hy, (int)(16 * S), Fade(Color{120, 160, 220, 255}, wet_ * 0.4f));
+  }
+  if (blood_ > 0.05f) {
+    DrawCircle((int)(x + 8 * S), (int)(y - 10 * S), (int)(3 * S * blood_ + 1), Fade(Color{140, 20, 30, 255}, blood_));
+  }
+  if (lip_ > 0.05f) {
+    DrawEllipse((int)hx, (int)(hy + 7 * S), (int)(4 * S), (int)(1.6f * S + lip_ * 3.f * S), shade(skin, 0.6f));
+  }
 }
 
 
