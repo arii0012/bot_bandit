@@ -1,4 +1,6 @@
 #include "GameSystems.hpp"
+#include "Core/HotReloadConfig.hpp"
+#include "Core/EventBus.hpp"
 #include <algorithm>
 #include "Core/Application.hpp"
 #include "UI/UISystem.hpp"
@@ -46,7 +48,8 @@ void GameSystems::DoWork(int jobIndex) {
   p->SetEnergy(p->Energy() - 12);
   workCd_ = 12.f;
   auto msgs = p->AddExp(25);
-  ui->Toast("+" + std::to_string(earned) + " руб. (" + job.name + ")");
+  ui->Toast("+" + std::to_string(earned) + " (" + job.name + ")");
+  EventBus::Get().Emit(GameEvent::MoneyChanged, EventPayload{earned});
 }
 
 void GameSystems::DoRob() {
@@ -501,8 +504,9 @@ void GameSystems::RepairProject() {
 void GameSystems::DoClub() {
   auto* p = app_->Player();
   auto* ui = app_->UI();
-  if (p->Money() < 5000) { ui->Toast("Club entry $5000"); return; }
-  p->AddMoney(-5000);
+  int fee = HotReloadConfig::Get().ClubEntry();
+  if (p->Money() < fee) { ui->Toast("Club entry"); return; }
+  p->AddMoney(-fee);
   p->SetEnergy(std::min(100, p->Energy() + 25));
   ui->Toast("Club: energy +25");
   if (app_->Cutscenes()) app_->Cutscenes()->Play("vip_club");
@@ -517,8 +521,9 @@ void GameSystems::DoClubVip() {
         c.find("gold") != std::string::npos) dress = true;
   }
   if (!dress) { ui->Toast("VIP dress-code failed"); return; }
-  if (p->Money() < 25000) { ui->Toast("VIP entry $25000"); return; }
-  p->AddMoney(-25000);
+  int fee = HotReloadConfig::Get().VipEntry();
+  if (p->Money() < fee) { ui->Toast("VIP entry"); return; }
+  p->AddMoney(-fee);
   p->SetEnergy(100);
   p->AddHeat(-5);
   ui->Toast("VIP lounge: energy full, heat -5");

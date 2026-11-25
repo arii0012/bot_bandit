@@ -22,7 +22,14 @@
 #include "Garage3D.hpp"
 #include "Mechanics20.hpp"
 #include "Systems/AudioEngine.hpp"
+#include "Graphics/ModelStore.hpp"
 #include "Systems/TutorialSystem.hpp"
+#include "Minigames/MinigamesSuite.hpp"
+#include "Systems/ArrestAndJailSystem.hpp"
+#include "Core/ProfilerOverlay.hpp"
+#include "Core/ReplaySystem.hpp"
+#include "Core/HotReloadConfig.hpp"
+#include "Core/EventBus.hpp"
 #include <cstdio>
 #include <algorithm>
 #include <cmath>
@@ -32,6 +39,8 @@ Application::Application() {
   SetTargetFPS(60);
   FontUI::Get().Init();
   AudioEngine::Get().Init();
+  HotReloadConfig::Get().EnsureDefault();
+  ModelStore::Get().Init();
   HideCursor();
 
   assets_ = std::make_unique<AssetManager>();
@@ -67,6 +76,7 @@ Application::~Application() {
   }
   if (shaders_) shaders_->Shutdown();
   if (engineAudio_) engineAudio_->Stop();
+  ModelStore::Get().Shutdown();
   AudioEngine::Get().Shutdown();
   FontUI::Get().Shutdown();
   if (IsWindowReady()) CloseWindow();
@@ -114,16 +124,41 @@ void Application::Run() {
     dt_ = GetFrameTime();
     if (dt_ > 0.1f) dt_ = 0.1f;
     if (dt_ < 0.f) dt_ = 0.f;
+    static ProfilerOverlay prof;
+    static ReplaySystem replay;
+    static ArrestAndJailSystem jail;
+    static MinigamesSuite minis;
+    prof.BeginFrame();
+    if (IsKeyPressed(KEY_F3)) prof.Toggle();
+    if (IsKeyPressed(KEY_F5)) HotReloadConfig::Get().Reload();
+    if (IsKeyPressed(KEY_F9)) replay.TogglePlayback();
     AudioEngine::Get().Update(dt_);
     if (state_ == AppState::MainMenu) AudioEngine::Get().SetMood(MusicMood::Menu);
     else if (state_ == AppState::Playing) {
       if (player_ && player_->Wanted() >= 3) AudioEngine::Get().SetMood(MusicMood::Chase);
       else AudioEngine::Get().SetMood(MusicMood::City);
     }
+    if (player_ && state_ == AppState::Playing && !jail.Jailed()) {
+      float px = (float)screenW_ * 0.5f, py = (float)screenH_ * 0.55f;
+      replay.Push(px, py, player_->Facing(), 0.f, player_->Wanted(), GetTime());
+      // auto-arrest on high wanted
+      if (player_->Wanted() >= 5 && GetRandomValue(0, 1000) < 3) {
+        jail.Arrest(*player_, CrimeArticle::ResistArrest,
+                    static_cast<float>(HotReloadConfig::Get().JailPerStar() * player_->Wanted()));
+      }
+    }
+    if (jail.Jailed() && player_) jail.Update(dt_, *player_);
+    minis.Update(dt_);
+    replay.Update(dt_);
     Update();
     BeginDrawing();
     ClearBackground(Color{8, 8, 14, 255});
     Draw();
+    if (jail.Jailed()) jail.Draw(screenW_, screenH_);
+    if (minis.Active()) minis.Draw(screenW_, screenH_);
+    replay.Draw(screenW_, screenH_);
+    prof.EndFrame();
+    prof.Draw(screenW_);
     EndDrawing();
   }
 }
