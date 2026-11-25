@@ -29,6 +29,7 @@
 #include "UI/ActionPanel.hpp"
 #include "Systems/DialogueSystem.hpp"
 #include "Systems/StoryDirector.hpp"
+#include "Minigames/StoryMinigames.hpp"
 #include "Systems/ReputationScales.hpp"
 #include "Minigames/MinigamesSuite.hpp"
 #include "Systems/ArrestAndJailSystem.hpp"
@@ -321,6 +322,7 @@ void Application::Draw() {
     static TutorialOverlay tutOverlay;
     static ActionPanel actionPanel;
     static DialogueSystem dialogue;
+    static StoryMinigames storyMini;
     static bool tutStarted = false;
     if (!tutStarted && state_ == AppState::Playing) {
       tutorial.Start();
@@ -329,7 +331,8 @@ void Application::Draw() {
     }
     tutorial.Update(dt_);
     tutOverlay.Update(dt_);
-    StoryDirector::Get().Poll(dialogue);
+    StoryDirector::Get().Poll(dialogue, storyMini);
+    if (player_) storyMini.Update(dt_, *player_);
     dialogue.Update(dt_);
     if (state_ == AppState::Playing && player_ && !tutOverlay.Active()) {
       actionPanel.SetHighlight(ActionId::Count, false);
@@ -338,7 +341,9 @@ void Application::Draw() {
     }
     if (state_ == AppState::Playing && player_) {
       ActionId act = actionPanel.Update(*player_, static_cast<float>(GetTime()));
-      if (act == ActionId::Work && systems_) systems_->DoWork(0);
+      if (act == ActionId::Work) {
+        storyMini.StartWorkShift("Smena", 8, 5000 + player_->Level() * 500);
+      }
       if (act == ActionId::Rob && systems_) systems_->DoRob();
       if (act == ActionId::Fence && systems_) systems_->DoFenceSell();
       if (act == ActionId::LayLow && systems_) systems_->DoHide();
@@ -355,6 +360,7 @@ void Application::Draw() {
       actionPanel.Draw(*player_, static_cast<float>(GetTime()), screenW_, screenH_);
       tutOverlay.Draw(screenW_, screenH_);
       dialogue.Draw(screenW_, screenH_);
+      storyMini.Draw(screenW_, screenH_);
       // scales mini
       if (player_) {
         char sc[80];

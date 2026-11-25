@@ -1,6 +1,7 @@
 #pragma once
 #include "Systems/DialogueSystem.hpp"
 #include "Cutscenes/CutsceneSystem.hpp"
+#include "Minigames/StoryMinigames.hpp"
 #include "Systems/ReputationScales.hpp"
 #include <string>
 
@@ -28,12 +29,43 @@ public:
     };
     pendingDlg_ = n;
     hasPending_ = true;
+    pendingMini_ = StoryMiniId::Delivery;
   }
 
-  void Poll(DialogueSystem& dlg) {
+  void AdvanceAct(CutsceneSystem* cuts, StoryMinigames& mini) {
+    act_++;
+    if (act_ == 2) {
+      if (cuts) cuts->Play("ch2_first_wheels");
+      pendingMini_ = StoryMiniId::DriftChase;
+    } else if (act_ == 3) {
+      if (cuts) cuts->Play("ch3_own_corner");
+    } else if (act_ == 4) {
+      if (cuts) cuts->Play("ch4_dark_deals");
+      pendingMini_ = StoryMiniId::CameraRoute;
+    } else if (act_ == 5) {
+      if (cuts) cuts->Play("ch5_big_stakes");
+    } else if (act_ >= 6 && act_ <= 10) {
+      char id[32];
+      snprintf(id, sizeof(id), "ch%d", act_);
+      // map to chapter ids
+      const char* ids[] = {"", "ch1_cold_start", "ch2_first_wheels", "ch3_own_corner",
+        "ch4_dark_deals", "ch5_big_stakes", "ch6_business", "ch7_setup",
+        "ch8_capital", "ch9_war", "ch10_empire"};
+      if (act_ >= 1 && act_ <= 10 && cuts) cuts->Play(ids[act_]);
+    }
+    (void)mini;
+  }
+
+  void Poll(DialogueSystem& dlg, StoryMinigames& mini) {
     if (hasPending_ && !dlg.Active()) {
       dlg.Open(pendingDlg_);
       hasPending_ = false;
+    }
+    if (pendingMini_ != StoryMiniId::None && !dlg.Active() && !mini.Active()) {
+      if (pendingMini_ == StoryMiniId::Delivery) mini.StartDelivery();
+      if (pendingMini_ == StoryMiniId::DriftChase) mini.StartDriftChase();
+      if (pendingMini_ == StoryMiniId::CameraRoute) mini.StartCameraRoute();
+      pendingMini_ = StoryMiniId::None;
     }
   }
 
@@ -41,4 +73,5 @@ private:
   int act_ = 0;
   bool hasPending_ = false;
   DialogueNode pendingDlg_{};
+  StoryMiniId pendingMini_ = StoryMiniId::None;
 };
