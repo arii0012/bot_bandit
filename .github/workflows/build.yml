@@ -34,6 +34,13 @@ jobs:
             }
           }
 
+      
+      - name: Prepare character textures
+        continue-on-error: true
+        run: |
+          pip install Pillow || pip3 install Pillow || true
+          python tools/prepare_character_assets.py || python3 tools/prepare_character_assets.py || true
+
       - name: Configure
         run: |
           choco install ninja -y --no-progress
@@ -89,6 +96,13 @@ jobs:
             mkdir -p assets/models
             command -v blender >/dev/null && blender --background --python tools/generate_blender_assets.py || true
           fi
+
+      
+      - name: Prepare character textures
+        continue-on-error: true
+        run: |
+          pip install Pillow || pip3 install Pillow || true
+          python tools/prepare_character_assets.py || python3 tools/prepare_character_assets.py || true
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja

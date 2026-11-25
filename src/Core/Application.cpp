@@ -24,6 +24,8 @@
 #include "Systems/AudioEngine.hpp"
 #include "Graphics/ModelStore.hpp"
 #include "Graphics/ShaderFX.hpp"
+#include "Graphics/TextureAtlasManager.hpp"
+#include "Graphics/RenderOptimizer.hpp"
 #include "Systems/TutorialSystem.hpp"
 #include "Systems/TutorialOverlay.hpp"
 #include "UI/ActionPanel.hpp"
@@ -60,6 +62,7 @@ Application::Application() {
   HotReloadConfig::Get().EnsureDefault();
   ModelStore::Get().Init();
   ShaderFX::Get().Init();
+  TextureAtlasManager::Get().Init();
   HideCursor();
 
   assets_ = std::make_unique<AssetManager>();
@@ -95,6 +98,7 @@ Application::~Application() {
   }
   if (shaders_) shaders_->Shutdown();
   if (engineAudio_) engineAudio_->Stop();
+  TextureAtlasManager::Get().Shutdown();
   ShaderFX::Get().Shutdown();
   ModelStore::Get().Shutdown();
   AudioEngine::Get().Shutdown();

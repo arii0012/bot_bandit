@@ -133,3 +133,12 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:LifeSim3D_Setup>/assets
   )
 endif()
+
+# Optional character texture prep (Pillow)
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_FOUND)
+  add_custom_target(prep_character
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/prepare_character_assets.py
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Prepare character PNG textures")
+endif()
