@@ -215,7 +215,67 @@ void ExhaustParticles::Update(float dt) {
   }
 }
 
+void ExhaustParticles::EmitBills(float x, float y, int n) {
+  for (int i = 0; i < n; ++i) {
+    auto& p = Next();
+    float a = (rand() % 628) / 100.f;
+    p.x = x; p.y = y;
+    p.vx = cosf(a) * (30.f + rand() % 50);
+    p.vy = sinf(a) * (30.f + rand() % 40) - 40.f;
+    p.maxLife = 1.0f + (rand() % 40) / 100.f;
+    p.life = p.maxLife;
+    p.size = 4.f + (rand() % 3);
+    p.r = 60; p.g = 160; p.b = 80; p.a = 230;
+    p.kind = ParticleKind::Confetti;
+    p.alive = true;
+  }
+}
+
+void ExhaustParticles::EmitHeatHaze(float x, float y) {
+  for (int i = 0; i < 4; ++i) {
+    auto& p = Next();
+    p.x = x + (rand() % 40) - 20.f;
+    p.y = y;
+    p.vx = (rand() % 20) - 10.f;
+    p.vy = -40.f - (rand() % 30);
+    p.maxLife = 0.5f;
+    p.life = p.maxLife;
+    p.size = 10.f;
+    p.r = 255; p.g = 180; p.b = 80; p.a = 60;
+    p.kind = ParticleKind::Dust;
+    p.alive = true;
+  }
+}
+
+void ExhaustParticles::EmitGlitch(float x, float y, float w, float h) {
+  for (int i = 0; i < 8; ++i) {
+    auto& p = Next();
+    p.x = x + (rand() % (int)std::max(1.f, w));
+    p.y = y + (rand() % (int)std::max(1.f, h));
+    p.vx = (rand() % 200) - 100.f;
+    p.vy = (rand() % 40) - 20.f;
+    p.maxLife = 0.2f;
+    p.life = p.maxLife;
+    p.size = 2.f + (rand() % 6);
+    p.r = (unsigned char)(rand() % 255);
+    p.g = 40; p.b = 255; p.a = 200;
+    p.kind = ParticleKind::NeonSpark;
+    p.alive = true;
+  }
+}
+
+void ExhaustParticles::DrawGodRays(float originX, float originY, int sw, int sh, float intensity) {
+  if (intensity <= 0.01f) return;
+  for (int i = 0; i < 7; ++i) {
+    float a = -1.2f + i * 0.35f;
+    Vector2 end{originX + cosf(a) * (float)sh * 0.9f, originY + sinf(a) * (float)sh * 0.9f};
+    DrawLineEx(Vector2{originX, originY}, end, 18.f, Fade(Color{255, 230, 160, 255}, 0.04f * intensity));
+  }
+  (void)sw;
+}
+
 void ExhaustParticles::Draw() {
+
   for (auto& p : pool_) {
     if (!p.alive) continue;
     float t = p.life / p.maxLife;

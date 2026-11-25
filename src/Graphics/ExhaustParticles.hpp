@@ -26,6 +26,10 @@ public:
   void EmitMuzzle(float x, float y, float angle);
   void EmitConfetti(float x, float y, int n);
   void EmitNeonSpark(float x, float y);
+  void EmitBills(float x, float y, int n);
+  void EmitHeatHaze(float x, float y);
+  void EmitGlitch(float x, float y, float w, float h);
+  void DrawGodRays(float originX, float originY, int sw, int sh, float intensity);
   void Update(float dt);
   void Draw();
 
