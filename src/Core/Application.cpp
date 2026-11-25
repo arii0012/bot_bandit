@@ -30,6 +30,10 @@
 #include "Core/ReplaySystem.hpp"
 #include "Core/HotReloadConfig.hpp"
 #include "Core/EventBus.hpp"
+#include "Systems/DifficultySystem.hpp"
+#include "Systems/AntiAbuse.hpp"
+#include "Systems/RealisticBusiness.hpp"
+#include "Graphics/ArtworkRenderer.hpp"
 #include <cstdio>
 #include <algorithm>
 #include <cmath>
@@ -184,8 +188,14 @@ void Application::Update() {
         mainMenu_->Close();
       }
     } else if (act == MainMenuAction::NewGame) {
+      if (IsKeyDown(KEY_F1)) DifficultySystem::Get().Set(Difficulty::Newbie);
+      else if (IsKeyDown(KEY_F2)) DifficultySystem::Get().Set(Difficulty::Street);
+      else if (IsKeyDown(KEY_F4)) DifficultySystem::Get().Set(Difficulty::Nineties);
+      else if (IsKeyDown(KEY_LEFT_SHIFT) && IsKeyDown(KEY_F3)) DifficultySystem::Get().Set(Difficulty::Hardcore);
+      else DifficultySystem::Get().Set(Difficulty::Street);
       player_ = std::make_unique<Character>();
-      if (cutscenes_) cutscenes_->Play("debut");
+      DifficultySystem::Get().ApplyNewGame(*player_);
+      if (cutscenes_) cutscenes_->Play("ch1_cold_start");
       state_ = AppState::CharacterCreate;
       mainMenu_->Close();
     } else if (act == MainMenuAction::CharacterStudio) {
@@ -320,7 +330,8 @@ void Application::DrawHUD() {
   if (!player_) return;
   float pad = 16.f;
   char buf[192];
-  snprintf(buf, sizeof(buf), "$%lld  LV%d  EN%d  WANTED%d",
+  /* money via FormatRub */
+    snprintf(buf, sizeof(buf), "$%lld  LV%d  EN%d  WANTED%d",
            (long long)player_->Money(), player_->Level(), player_->Energy(), player_->Wanted());
   DrawRectangleRounded(Rectangle{pad, pad, 420, 40}, 0.2f, 8, Color{10, 10, 18, 200});
   FontUI::Get().Draw(buf, pad + 12, pad + 10, 18, Color{240, 240, 250, 255});

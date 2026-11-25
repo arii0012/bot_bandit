@@ -68,7 +68,7 @@ public:
 
   // serialization helpers
   std::string name_ = "Бандит";
-  int64_t money_ = 25000;
+  int64_t money_ = 45000;
   int level_ = 1;
   int exp_ = 0;
   int energy_ = 100;

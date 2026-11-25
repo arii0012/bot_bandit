@@ -1,5 +1,8 @@
 #include "GameSystems.hpp"
 #include "Core/HotReloadConfig.hpp"
+#include "Systems/DifficultySystem.hpp"
+#include "Systems/AntiAbuse.hpp"
+#include "Graphics/ArtworkRenderer.hpp"
 #include "Core/EventBus.hpp"
 #include <algorithm>
 #include "Core/Application.hpp"
@@ -43,12 +46,12 @@ void GameSystems::DoWork(int jobIndex) {
   if (jobIndex < 0 || jobIndex >= (int)city->jobs.size()) jobIndex = 0;
   auto& job = city->jobs[jobIndex];
   float mult = 1.f + city->workBonus / 200.f;
-  int earned = (int)((job.basePay + p->Level() * 220 + p->Strength() * 160) * mult);
+  int earned = (int)((job.basePay + p->Level() * 220 + p->Strength() * 160) * mult * DifficultySystem::Get().QuestPayMult() * HotReloadConfig::Get().WorkPayMult());
   p->AddMoney(earned);
   p->SetEnergy(p->Energy() - 12);
   workCd_ = 12.f;
   auto msgs = p->AddExp(25);
-  ui->Toast("+" + std::to_string(earned) + " (" + job.name + ")");
+  ui->Toast("+" + ArtworkRenderer::FormatRub(earned) + " (" + job.name + ")");
   EventBus::Get().Emit(GameEvent::MoneyChanged, EventPayload{earned});
 }
 
