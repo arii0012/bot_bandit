@@ -30,6 +30,10 @@
 #include "Systems/DialogueSystem.hpp"
 #include "Systems/StoryDirector.hpp"
 #include "Minigames/StoryMinigames.hpp"
+#include "Systems/LifeSystems.hpp"
+#include "UI/TravelScreen.hpp"
+#include "UI/ShopScreen.hpp"
+#include "Vehicles/VehicleDeepSystem.hpp"
 #include "Systems/ReputationScales.hpp"
 #include "Minigames/MinigamesSuite.hpp"
 #include "Systems/ArrestAndJailSystem.hpp"
@@ -323,6 +327,12 @@ void Application::Draw() {
     static ActionPanel actionPanel;
     static DialogueSystem dialogue;
     static StoryMinigames storyMini;
+    static FamilyCalls family;
+    static RadioSystem radio;
+    static FinaleSystem finale;
+    static TravelScreen travel;
+    static ShopScreen shop;
+    static VehicleDeepSystem vehicleDeep;
     static bool tutStarted = false;
     if (!tutStarted && state_ == AppState::Playing) {
       tutorial.Start();
@@ -333,6 +343,16 @@ void Application::Draw() {
     tutOverlay.Update(dt_);
     StoryDirector::Get().Poll(dialogue, storyMini);
     if (player_) storyMini.Update(dt_, *player_);
+    if (player_ && state_ == AppState::Playing) {
+      if (shop.IsOpen()) shop.Update(*player_, &vehicleDeep);
+      if (travel.IsOpen() && world_) travel.Update(*player_, *world_);
+      family.Update(dt_, *player_);
+      if (family.Pending()) {
+        if (IsKeyPressed(KEY_Y)) family.Accept(*player_);
+        if (IsKeyPressed(KEY_N)) family.Refuse();
+      }
+      if (IsKeyPressed(KEY_R)) radio.NextWave();
+    }
     dialogue.Update(dt_);
     if (state_ == AppState::Playing && player_ && !tutOverlay.Active()) {
       actionPanel.SetHighlight(ActionId::Count, false);
@@ -351,7 +371,11 @@ void Application::Draw() {
         player_->SetEnergy(100);
         if (ui_) ui_->Toast("Otdyh: EN polnaya");
       }
-      if (act == ActionId::Shop && ui_) ui_->OpenShop();
+      if (IsKeyPressed(KEY_F10) && player_ && StoryDirector::Get().Act() >= 10) {
+        // show finale overlay next frames via act check
+      }
+      if (act == ActionId::Shop) shop.Open();
+      if (act == ActionId::Travel) travel.Open();
     }
     DrawHUD();
     if (ui_) ui_->Draw();
@@ -361,6 +385,12 @@ void Application::Draw() {
       tutOverlay.Draw(screenW_, screenH_);
       dialogue.Draw(screenW_, screenH_);
       storyMini.Draw(screenW_, screenH_);
+      family.Draw(screenW_);
+      if (shop.IsOpen()) shop.Draw(screenW_, screenH_, *player_);
+      if (travel.IsOpen() && world_) travel.Draw(screenW_, screenH_, *world_);
+      if (garage3d_ && garage3d_->IsOpen()) vehicleDeep.DrawGarageStats(40, 100);
+      FontUI::Get().Draw(radio.WaveName(), screenW_ - 200.f, 40, 14, Color{0, 220, 255, 255});
+      FontUI::Get().Draw(radio.Blurb(), screenW_ - 280.f, 58, 12, Color{140, 140, 160, 255});
       // scales mini
       if (player_) {
         char sc[80];
