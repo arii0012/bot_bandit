@@ -31,6 +31,7 @@
 #include "Systems/StoryDirector.hpp"
 #include "Minigames/StoryMinigames.hpp"
 #include "Systems/LifeSystems.hpp"
+#include "Systems/QuestSystem.hpp"
 #include "UI/TravelScreen.hpp"
 #include "UI/ShopScreen.hpp"
 #include "Vehicles/VehicleDeepSystem.hpp"
@@ -209,6 +210,7 @@ void Application::Update() {
       player_ = std::make_unique<Character>();
       DifficultySystem::Get().ApplyNewGame(*player_);
       StoryDirector::Get().StartAct1Intro(cutscenes_.get());
+      QuestSystem::Get().StartCampaign();
       state_ = AppState::CharacterCreate;
       mainMenu_->Close();
     } else if (act == MainMenuAction::CharacterStudio) {
@@ -352,6 +354,9 @@ void Application::Draw() {
         if (IsKeyPressed(KEY_N)) family.Refuse();
       }
       if (IsKeyPressed(KEY_R)) { radio.NextWave(); AudioEngine::Get().NextRadio(); }
+      if (IsKeyPressed(KEY_J)) QuestSystem::Get().ToggleJournal();
+      QuestSystem::Get().PollBlackSwan(dt_);
+      QuestSystem::Get().ApplyPendingReward(*player_);
     }
     dialogue.Update(dt_);
     if (state_ == AppState::Playing && player_ && !tutOverlay.Active()) {
@@ -386,6 +391,8 @@ void Application::Draw() {
       dialogue.Draw(screenW_, screenH_);
       storyMini.Draw(screenW_, screenH_);
       family.Draw(screenW_);
+      QuestSystem::Get().DrawJournal(screenW_, screenH_);
+      QuestSystem::Get().DrawSwan(screenW_);
       if (shop.IsOpen()) shop.Draw(screenW_, screenH_, *player_);
       if (travel.IsOpen() && world_) travel.Draw(screenW_, screenH_, *world_);
       if (garage3d_ && garage3d_->IsOpen()) vehicleDeep.DrawGarageStats(40, 100);
