@@ -23,6 +23,7 @@
 #include "Mechanics20.hpp"
 #include "Systems/AudioEngine.hpp"
 #include "Graphics/ModelStore.hpp"
+#include "Graphics/ShaderFX.hpp"
 #include "Systems/TutorialSystem.hpp"
 #include "Systems/TutorialOverlay.hpp"
 #include "UI/ActionPanel.hpp"
@@ -50,6 +51,7 @@ Application::Application() {
   AudioEngine::Get().Init();
   HotReloadConfig::Get().EnsureDefault();
   ModelStore::Get().Init();
+  ShaderFX::Get().Init();
   HideCursor();
 
   assets_ = std::make_unique<AssetManager>();
@@ -85,6 +87,7 @@ Application::~Application() {
   }
   if (shaders_) shaders_->Shutdown();
   if (engineAudio_) engineAudio_->Stop();
+  ShaderFX::Get().Shutdown();
   ModelStore::Get().Shutdown();
   AudioEngine::Get().Shutdown();
   FontUI::Get().Shutdown();

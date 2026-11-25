@@ -23,6 +23,8 @@ public:
   void SetCity(const std::string& id);
 
   float TimeOfDay() const { return timeOfDay_; }
+  bool Raining() const { return raining_; }
+  void SetRaining(bool v) { raining_ = v; }
 
 private:
   void EnsureBuildings(int sw);
