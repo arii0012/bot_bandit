@@ -351,7 +351,7 @@ void Application::Draw() {
         if (IsKeyPressed(KEY_Y)) family.Accept(*player_);
         if (IsKeyPressed(KEY_N)) family.Refuse();
       }
-      if (IsKeyPressed(KEY_R)) radio.NextWave();
+      if (IsKeyPressed(KEY_R)) { radio.NextWave(); AudioEngine::Get().NextRadio(); }
     }
     dialogue.Update(dt_);
     if (state_ == AppState::Playing && player_ && !tutOverlay.Active()) {

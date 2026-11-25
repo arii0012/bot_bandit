@@ -88,4 +88,14 @@ public:
   int engineLvl_ = 0, turboLvl_ = 0;
   bool neonCar_ = false;
   unsigned char carR_ = 200, carG_ = 40, carB_ = 40;
+  float dirt_ = 0.f;
+  float wet_ = 0.f;
+  float blood_ = 0.f;
+  float lip_ = 0.f; // lipsync 0..1
+  void SetDirt(float v) { dirt_ = v < 0 ? 0 : (v > 1 ? 1 : v); }
+  void SetWet(float v) { wet_ = v < 0 ? 0 : (v > 1 ? 1 : v); }
+  void SetBlood(float v) { blood_ = v < 0 ? 0 : (v > 1 ? 1 : v); }
+  void SetLip(float v) { lip_ = v < 0 ? 0 : (v > 1 ? 1 : v); }
+  float Dirt() const { return dirt_; }
+  float Wet() const { return wet_; }
 };
