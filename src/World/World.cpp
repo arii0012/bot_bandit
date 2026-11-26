@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
+#include <algorithm>
 
 World::World() { EnsureCity(); }
 
@@ -177,6 +178,7 @@ int World::NearHouseIndex(Vector3 playerPos, float radius) const {
 bool World::TryBuyHouse(int idx, Character& p, std::string& msg) {
   if (idx < 0 || idx >= (int)buildings3_.size()) { msg = "Нет дома"; return false; }
   auto& b = buildings3_[idx];
+  const std::string propertyId = cityId_ + "_house_" + std::to_string(idx);
   if (b.owned) { msg = "Уже куплен"; return false; }
   if (p.Money() < b.price) {
     msg = std::string("Нужно ") + ArtworkRenderer::FormatRub(b.price);
@@ -184,7 +186,7 @@ bool World::TryBuyHouse(int idx, Character& p, std::string& msg) {
   }
   p.AddMoney(-b.price);
   b.owned = true;
-  p.Inv().houses.push_back("house_" + std::to_string(idx));
+  p.Inv().houses.push_back(propertyId);
   msg = "Дом куплен!";
   return true;
 }
@@ -194,4 +196,15 @@ bool World::EnterHouse(int idx) {
   if (!buildings3_[idx].owned) return false;
   interiorHouse_ = idx;
   return true;
+}
+
+void World::SyncOwnedHouses(const Character& p) {
+  const auto& owned = p.Inv().houses;
+  for (size_t i = 0; i < buildings3_.size(); ++i) {
+    const std::string propertyId = cityId_ + "_house_" + std::to_string(i);
+    const std::string legacyId = "house_" + std::to_string(i);
+    buildings3_[i].owned =
+      std::find(owned.begin(), owned.end(), propertyId) != owned.end() ||
+      std::find(owned.begin(), owned.end(), legacyId) != owned.end();
+  }
 }
