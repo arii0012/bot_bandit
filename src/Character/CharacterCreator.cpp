@@ -16,9 +16,9 @@ bool CharacterCreator::IsOpen() const { return open_; }
 
 static Color Palette(int i) {
   static Color cols[] = {
-    {40,30,20,255},{20,20,25,255},{180,40,40,255},{40,80,180,255},
-    {40,140,60,255},{220,180,40,255},{200,200,210,255},{120,40,160,255},
-    {230,120,160,255},{90,60,40,255},{0,200,255,255},{255,100,40,255}
+    {40, 30, 20, 255}, {20, 20, 25, 255}, {180, 40, 40, 255}, {40, 80, 180, 255},
+    {40, 140, 60, 255}, {220, 180, 40, 255}, {200, 200, 210, 255}, {120, 40, 160, 255},
+    {230, 120, 160, 255}, {90, 60, 40, 255}, {0, 200, 255, 255}, {255, 100, 40, 255}
   };
   return cols[i % 12];
 }
@@ -34,7 +34,10 @@ void CharacterCreator::Update(float dt) {
     switch (tab_) {
       case 0: player_->SetFemale(sel_ % 2 == 1); break;
       case 1: player_->colorEyes_ = c; break;
-      case 2: player_->hairColor_ = c; player_->hairStyle_ = sel_ % 12; break;
+      case 2:
+        player_->SetHairColor(c);
+        player_->SetHairStyle(sel_ % 12);
+        break;
       case 3: player_->colorTop_ = c; player_->topStyle_ = sel_ % 6; break;
       case 4: player_->colorPants_ = c; player_->pantsStyle_ = sel_ % 6; break;
       case 5: player_->colorHat_ = c; player_->hatStyle_ = sel_ % 6; break;
@@ -55,11 +58,9 @@ void CharacterCreator::Draw(int sw, int sh) {
     DrawRectangleRounded(r, 0.2f, 6, i == tab_ ? Color{255, 55, 95, 255} : Color{32, 32, 48, 255});
     FontUI::Get().DrawCentered(tabs[i], r.x + r.width * 0.5f, r.y + 6.f, 13, WHITE);
   }
-  // preview
   float cx = sw * 0.7f, cy = sh * 0.5f;
-  player_->facingAngle_ = spin_;
+  player_->SetFacing(spin_);
   player_->Draw(cx, cy);
-  // palette
   for (int i = 0; i < 12; ++i) {
     Rectangle r{40.f + (i % 6) * 50.f, 120.f + (i / 6) * 50.f, 42.f, 42.f};
     DrawRectangleRec(r, Palette(i));
@@ -67,5 +68,6 @@ void CharacterCreator::Draw(int sw, int sh) {
   }
   FontUI::Get().Draw("TAB - vkladka  A/D - cvet  ENTER - primenit  ESC - nazad", 40, sh - 40.f, 14,
                      Color{140, 140, 160, 255});
-  FontUI::Get().Draw(player_->Female() ? "Zhenskaya model" : "Muzhskaya model", 40, 230, 16, Color{0, 220, 255, 255});
+  FontUI::Get().Draw(player_->GenderFemale() ? "Zhenskaya model" : "Muzhskaya model", 40, 230, 16,
+                     Color{0, 220, 255, 255});
 }
