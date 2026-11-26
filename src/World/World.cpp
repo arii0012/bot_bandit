@@ -137,6 +137,8 @@ void World::Draw3DScene(Camera3D cam) {
   DrawTraffic3D();
   DrawProps();
   EndMode3D();
+  const std::string cityLabel = CurrentCityName();
+  FontUI::Get().Draw(cityLabel.c_str(), 18.f, 18.f, 20.f, Color{235, 240, 250, 255});
 }
 
 void World::Draw(int sw, int sh) {
