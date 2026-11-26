@@ -146,12 +146,12 @@ private:
       btns_[btnCount_] = Rectangle{bx, by + btnCount_ * (bh + gap), bw, bh};
       btnCount_++;
     };
-    if (hasSave_) add("CONTINUE", MainMenuAction::Continue, true); // PRODOLZHIT
-    add("NEW GAME", MainMenuAction::NewGame, !hasSave_);
-    add("CHARACTER STUDIO", MainMenuAction::CharacterStudio, false);
-    add("3D GARAGE", MainMenuAction::Garage3D, false);
-    add("SETTINGS", MainMenuAction::Settings, false);
-    add("EXIT", MainMenuAction::Exit, false);
+    if (hasSave_) add("ПРОДОЛЖИТЬ", MainMenuAction::Continue, true); // PRODOLZHIT
+    add("НОВАЯ ИГРА", MainMenuAction::NewGame, !hasSave_);
+    add("СТУДИЯ ПЕРСОНАЖА", MainMenuAction::CharacterStudio, false);
+    add("3D ГАРАЖ", MainMenuAction::Garage3D, false);
+    add("НАСТРОЙКИ", MainMenuAction::Settings, false);
+    add("ВЫХОД", MainMenuAction::Exit, false);
     (void)sw;
   }
 
