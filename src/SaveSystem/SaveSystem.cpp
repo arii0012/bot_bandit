@@ -174,8 +174,38 @@ bool SaveSystem::Load(Character& p, World& w) {
   }
   if (!root.is_object()) return false;
 
-  const auto version = root.value("schema_version", 1);
-  if (!root.contains("character") || !root["character"].is_object()) return false;
+  // Migrate the original flat save format (schema v1) in memory.
+  if (!root.contains("character")) {
+    json legacyCharacter = json::object();
+    for (const char* key : {"name", "money", "level", "exp", "energy", "heat", "wanted",
+                            "strength", "agility", "intelligence", "skill_points", "city",
+                            "active_car", "female", "hair_style", "body_type", "top_style",
+                            "pants_style", "hat_style", "shoe_style", "accessory_style",
+                            "hair_color", "eyes_color", "top_color", "pants_color",
+                            "hat_color", "shoes_color", "accessory_color", "engine_level",
+                            "turbo_level", "neon_car", "car_color", "dirt", "wet", "skills"}) {
+      if (root.contains(key)) legacyCharacter[key] = root[key];
+    }
+    root["character"] = std::move(legacyCharacter);
+
+    json legacyInventory = json::object();
+    for (const char* key : {"cars", "houses"}) {
+      if (root.contains(key)) legacyInventory[key] = root[key];
+    }
+    if (!legacyInventory.empty()) root["inventory"] = std::move(legacyInventory);
+
+    json legacyWorld = json::object();
+    for (const char* key : {"city", "street", "system", "debt"}) {
+      if (root.contains(key)) {
+        const char* destination = key;
+        if (std::string(key) == "street") destination = "street_reputation";
+        else if (std::string(key) == "system") destination = "system_reputation";
+        legacyWorld[destination] = root[key];
+      }
+    }
+    if (!legacyWorld.empty()) root["world"] = std::move(legacyWorld);
+  }
+  if (!root["character"].is_object()) return false;
   const json& character = root["character"];
 
   ReadIf(character, "name", p.name_);
@@ -287,6 +317,5 @@ bool SaveSystem::Load(Character& p, World& w) {
     w.SetCity(p.cityId_);
   }
 
-  (void)version; // Version 1 saves are accepted with defaults for newly added fields.
   return true;
 }
