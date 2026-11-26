@@ -340,11 +340,12 @@ void Application::Draw() {
         ClearBackground(Color{8, 12, 28, 255});
         world_->Draw3DScene(cam);
         if (player_) {
+          BeginMode3D(cam);
           player_->UpdateAnim(dt_);
-          player_->Draw3D(Vector3{0, 0, 2}, 1.f);
+          player_->Draw3D(Vector3{0.f, 0.f, 2.f}, 1.f);
+          EndMode3D();
         }
       }
-  if (player_) player_->Draw((float)screenW_ * 0.5f, (float)screenH_ * 0.55f);
   if (cutscenes_ && cutscenes_->Active()) cutscenes_->Draw(screenW_, screenH_);
 
   if (state_ == AppState::Playing || state_ == AppState::Pause || state_ == AppState::Console) {
@@ -514,7 +515,7 @@ void Application::DrawHUD() {
   }
 }
 
-void Application::DrawPauseMenuvoid Application::DrawPauseMenu() {
+void Application::DrawPauseMenu {
   int sw = screenW_, sh = screenH_;
   DrawRectangle(0, 0, sw, sh, Color{0, 0, 0, 160});
   float w = 360, h = 220;
