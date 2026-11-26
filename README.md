@@ -68,3 +68,7 @@ GitHub Actions builds `BotBandit-Setup-1.0.0.exe` (Inno Setup):
 - **Esc** → Pause → **Выход**
 - Character creator → **ВЫХОД** or Esc
 - Window close / Alt+F4
+
+## Build verification
+
+The GitHub Actions workflow builds the Windows x64 and Linux targets on every push and pull request. To create a downloadable release manually, open **Actions → Build → Run workflow**; tagged pushes beginning with `v` also publish a release.
