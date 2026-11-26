@@ -6,7 +6,7 @@
 // No WinAPI headers here — they conflict with raylib (CloseWindow, ShowCursor, Rectangle, DrawText).
 namespace WinAdmin {
   inline const char* DefaultReleaseZipUrl() {
-    return "https://github.com/OWNER/REPO/releases/latest/download/BotBandit-Windows-x64.zip";
+    return "https://github.com/arii0012/bot_bandit/releases/latest/download/BotBandit-Windows-x64.zip";
   }
 
   std::string DefaultInstallDir();
