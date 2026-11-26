@@ -100,6 +100,7 @@ public:
   int accStyle_ = 0;
   Model mesh_{};
   bool meshLoaded_ = false;
+  bool meshLoadAttempted_ = false;
   float animTime_ = 0.f;
   float facingAngle_ = 0.f; // radians, 0 = front
   int engineLvl_ = 0, turboLvl_ = 0;
