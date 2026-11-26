@@ -5,6 +5,7 @@
 #include "Graphics/ModelStore.hpp"
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 Character::Character() {
   skills_["stealth"] = 0;
@@ -317,7 +318,8 @@ void Character::Draw3D(Vector3 pos, float scale) {
 }
 
 void Character::AddHeat(int value) {
-  heat_ = std::clamp(heat_ + value, 0, 100);
+  const long long next = static_cast<long long>(heat_) + value;
+  heat_ = static_cast<int>(std::clamp(next, 0LL, 100LL));
 }
 
 int Character::Skill(const std::string& id) const {
@@ -328,29 +330,39 @@ int Character::Skill(const std::string& id) const {
 void Character::AddSkill(const std::string& id, int value) {
   if (id.empty()) return;
   int& current = skills_[id];
-  current = std::clamp(current + value, 0, 100);
+  const long long next = static_cast<long long>(current) + value;
+  current = static_cast<int>(std::clamp(next, 0LL, 100LL));
 }
 
 void Character::AddStat(const std::string& stat, int value) {
-  if (stat == "strength") strength_ = std::clamp(strength_ + value, 1, 100);
-  else if (stat == "agility") agility_ = std::clamp(agility_ + value, 1, 100);
-  else if (stat == "intelligence") intelligence_ = std::clamp(intelligence_ + value, 1, 100);
+  auto apply = [value](int& current) {
+    const long long next = static_cast<long long>(current) + value;
+    current = static_cast<int>(std::clamp(next, 1LL, 100LL));
+  };
+  if (stat == "strength") apply(strength_);
+  else if (stat == "agility") apply(agility_);
+  else if (stat == "intelligence") apply(intelligence_);
   else AddSkill(stat, value);
 }
 
 std::vector<std::string> Character::AddExp(int amount) {
   std::vector<std::string> messages;
-  if (amount <= 0) return messages;
+  if (amount <= 0 || level_ >= 9999) return messages;
 
-  exp_ += amount;
+  long long remaining = static_cast<long long>(std::max(0, exp_)) + amount;
   messages.push_back("Получено опыта: +" + std::to_string(amount));
 
-  while (exp_ >= level_ * 100) {
-    exp_ -= level_ * 100;
+  while (level_ < 9999) {
+    const long long required = static_cast<long long>(level_) * 100LL;
+    if (remaining < required) break;
+    remaining -= required;
     ++level_;
-    ++skillPoints_;
+    if (skillPoints_ < std::numeric_limits<int>::max()) ++skillPoints_;
     messages.push_back("Новый уровень: " + std::to_string(level_));
   }
+
+  exp_ = static_cast<int>(std::min<long long>(
+      remaining, std::numeric_limits<int>::max()));
   return messages;
 }
 
