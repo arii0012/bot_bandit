@@ -330,7 +330,20 @@ void Application::Draw() {
     return;
   }
 
-  if (world_) world_->Draw(screenW_, screenH_);
+  if (world_) {
+        Camera3D cam = {0};
+        cam.position = Vector3{0, 8, 14};
+        cam.target = Vector3{0, 1, 0};
+        cam.up = Vector3{0, 1, 0};
+        cam.fovy = 55.f;
+        cam.projection = CAMERA_PERSPECTIVE;
+        ClearBackground(Color{8, 12, 28, 255});
+        world_->Draw3DScene(cam);
+        if (player_) {
+          player_->UpdateAnim(dt_);
+          player_->Draw3D(Vector3{0, 0, 2}, 1.f);
+        }
+      }
   if (player_) player_->Draw((float)screenW_ * 0.5f, (float)screenH_ * 0.55f);
   if (cutscenes_ && cutscenes_->Active()) cutscenes_->Draw(screenW_, screenH_);
 

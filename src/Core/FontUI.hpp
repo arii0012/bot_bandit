@@ -12,7 +12,6 @@ public:
   void Draw(const char* text, float x, float y, float size, Color color);
   void Draw(const std::string& text, float x, float y, float size, Color color);
   void DrawCentered(const char* text, float cx, float y, float size, Color color);
-  void DrawCentered(const std::string& text, float cx, float y, float size, Color color);
 #if defined(__cpp_char8_t)
   void Draw(const char8_t* text, float x, float y, float size, Color color) {
     Draw(reinterpret_cast<const char*>(text), x, y, size, color);

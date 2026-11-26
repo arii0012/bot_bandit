@@ -1,204 +1,194 @@
 #include "World/World.hpp"
-#include "raylib.h"
+#include "Character/Character.hpp"
+#include "Core/FontUI.hpp"
+#include "Graphics/ArtworkRenderer.hpp"
+#include "raymath.h"
 #include <cmath>
-#include <algorithm>
 #include <cstdio>
 
-static Color shade_body(Color c) {
-  return Color{
-    (unsigned char)(c.r * 7 / 10),
-    (unsigned char)(c.g * 7 / 10),
-    (unsigned char)(c.b * 7 / 10),
-    c.a};
-}
+World::World() { EnsureCity(); }
 
-World::World() {
-  EnsureBuildings(1280);
-}
-
-void World::EnsureBuildings(int sw) {
-  if (sw == lastSw_ && !buildings_.empty()) return;
-  lastSw_ = sw;
-  buildings_.clear();
-  int n = 18 + (sw / 160);
-  for (int i = 0; i < n; ++i) {
-    Building b;
-    b.baseX = (float)i / (float)n + (GetRandomValue(0, 20) / 1000.f);
-    b.width = 40 + GetRandomValue(0, 50);
-    b.height = 80 + GetRandomValue(0, 220);
-    b.seed = i * 17 + 3;
-    buildings_.push_back(b);
+void World::EnsureCity() {
+  if (ready_) return;
+  buildings3_.clear();
+  traffic_.clear();
+  // grid of buildings along roads
+  int id = 0;
+  for (int z = -4; z <= 4; ++z) {
+    for (int x = -5; x <= 5; ++x) {
+      if ((x == 0 && (z == 0 || z == 1)) || (z == 0 && abs(x) <= 1)) continue; // road free
+      Building3D b{};
+      b.pos = {(float)x * 8.f + (float)(GetRandomValue(-10, 10) / 10.f), 0.f,
+               (float)z * 10.f + (float)(GetRandomValue(-10, 10) / 10.f)};
+      b.w = 3.5f + GetRandomValue(0, 20) / 10.f;
+      b.d = 3.5f + GetRandomValue(0, 20) / 10.f;
+      b.h = 6.f + GetRandomValue(0, 40) / 5.f;
+      b.wall = Color{(unsigned char)GetRandomValue(40, 90),
+                     (unsigned char)GetRandomValue(40, 90),
+                     (unsigned char)GetRandomValue(50, 100), 255};
+      b.price = 250000 + GetRandomValue(0, 40) * 25000;
+      b.owned = false;
+      buildings3_.push_back(b);
+      if (++id >= 36) break;
+    }
+    if (id >= 36) break;
   }
+  for (int i = 0; i < 12; ++i) {
+    TrafficCar c{};
+    c.pos = { -30.f + i * 6.f, 0.f, (i % 2 == 0) ? 0.f : 3.5f };
+    c.speed = 6.f + GetRandomValue(0, 40) / 10.f;
+    c.yaw = (i % 2 == 0) ? 0.f : 3.14159f;
+    c.body = Color{(unsigned char)GetRandomValue(40, 220),
+                   (unsigned char)GetRandomValue(40, 220),
+                   (unsigned char)GetRandomValue(40, 220), 255};
+    traffic_.push_back(c);
+  }
+  ready_ = true;
 }
 
 void World::Update(float dt) {
-  if (dt > 0.1f) dt = 0.1f;
-  timeOfDay_ = fmodf(timeOfDay_ + dt * 0.03f, 24.f);
-  scroll_ += dt * 18.f;
-  trafficT_ += dt;
-  pedT_ += dt;
+  EnsureCity();
+  timeOfDay_ = fmodf(timeOfDay_ + dt * 0.02f, 24.f);
+  for (auto& c : traffic_) {
+    float dir = (c.yaw < 1.f) ? 1.f : -1.f;
+    c.pos.x += dir * c.speed * dt;
+    c.pos.y = 0.f; // glue to asphalt
+    if (c.pos.x > 40.f) c.pos.x = -40.f;
+    if (c.pos.x < -40.f) c.pos.x = 40.f;
+  }
+}
+
+void World::DrawSky3D() {
+  // gradient sky via large cube faces not needed in Mode3D — ClearBackground outside
+}
+
+void World::DrawGround() {
+  // asphalt plane Y=0
+  DrawPlane(Vector3{0, 0, 0}, Vector2{120, 120}, Color{32, 32, 38, 255});
+  // road strip
+  DrawCube(Vector3{0, 0.02f, 0}, 80.f, 0.04f, 6.f, Color{28, 28, 32, 255});
+  DrawCube(Vector3{0, 0.02f, 8.f}, 80.f, 0.04f, 6.f, Color{28, 28, 32, 255});
+  // lane marks
+  for (int i = -20; i <= 20; ++i) {
+    DrawCube(Vector3{(float)i * 3.f, 0.03f, 0.f}, 1.2f, 0.02f, 0.15f, Color{200, 200, 80, 200});
+    DrawCube(Vector3{(float)i * 3.f, 0.03f, 8.f}, 1.2f, 0.02f, 0.15f, Color{200, 200, 80, 200});
+  }
+  // sidewalks
+  DrawCube(Vector3{0, 0.05f, -4.f}, 80.f, 0.08f, 2.f, Color{55, 55, 60, 255});
+  DrawCube(Vector3{0, 0.05f, 12.f}, 80.f, 0.08f, 2.f, Color{55, 55, 60, 255});
+}
+
+void World::DrawBuildings3D() {
+  for (size_t i = 0; i < buildings3_.size(); ++i) {
+    auto& b = buildings3_[i];
+    Vector3 center = {b.pos.x, b.h * 0.5f, b.pos.z};
+    DrawCube(center, b.w, b.h, b.d, b.wall);
+    DrawCubeWires(center, b.w, b.h, b.d, Fade(BLACK, 0.4f));
+    // windows
+    int floors = (int)(b.h / 2.2f);
+    for (int f = 0; f < floors; ++f) {
+      for (int w = 0; w < 3; ++w) {
+        float wx = b.pos.x - b.w * 0.3f + w * (b.w * 0.3f);
+        float wy = 1.2f + f * 2.2f;
+        float wz = b.pos.z + b.d * 0.51f;
+        Color win = (GetRandomValue(0, 3) == 0) ? Color{255, 220, 120, 220} : Color{30, 40, 60, 200};
+        DrawCube(Vector3{wx, wy, wz}, 0.5f, 0.7f, 0.05f, win);
+      }
+    }
+    // door marker
+    DrawCube(Vector3{b.pos.x, 0.9f, b.pos.z + b.d * 0.52f}, 0.8f, 1.8f, 0.1f, Color{40, 25, 20, 255});
+    if (!b.owned)
+      DrawSphere(Vector3{b.pos.x, 2.4f, b.pos.z + b.d * 0.6f}, 0.25f, Color{0, 255, 120, 180});
+    else
+      DrawSphere(Vector3{b.pos.x, 2.4f, b.pos.z + b.d * 0.6f}, 0.25f, Color{0, 180, 255, 180});
+  }
+}
+
+void World::DrawTraffic3D() {
+  for (auto& c : traffic_) {
+    c.pos.y = 0.f;
+    // body on road
+    DrawCube(Vector3{c.pos.x, 0.45f, c.pos.z}, 2.2f, 0.7f, 1.1f, c.body);
+    DrawCube(Vector3{c.pos.x, 0.85f, c.pos.z}, 1.2f, 0.45f, 1.0f, Fade(c.body, 0.85f));
+    // wheels on Y~0.2
+    DrawCylinder(Vector3{c.pos.x - 0.7f, 0.2f, c.pos.z - 0.55f}, 0.2f, 0.2f, 0.15f, 8, BLACK);
+    DrawCylinder(Vector3{c.pos.x + 0.7f, 0.2f, c.pos.z - 0.55f}, 0.2f, 0.2f, 0.15f, 8, BLACK);
+    DrawCylinder(Vector3{c.pos.x - 0.7f, 0.2f, c.pos.z + 0.55f}, 0.2f, 0.2f, 0.15f, 8, BLACK);
+    DrawCylinder(Vector3{c.pos.x + 0.7f, 0.2f, c.pos.z + 0.55f}, 0.2f, 0.2f, 0.15f, 8, BLACK);
+  }
+}
+
+void World::DrawProps() {
+  // street lamps
+  for (int i = -8; i <= 8; i += 2) {
+    float x = (float)i * 5.f;
+    DrawCylinder(Vector3{x, 2.5f, -3.2f}, 0.08f, 0.08f, 5.f, 6, Color{50, 50, 55, 255});
+    DrawSphere(Vector3{x, 5.1f, -3.2f}, 0.25f, Color{255, 230, 150, 200});
+  }
+  // neon club sign
+  DrawCube(Vector3{12.f, 4.f, 15.f}, 6.f, 1.2f, 0.2f, Color{220, 40, 80, 255});
+}
+
+void World::Draw3DScene(Camera3D cam) {
+  EnsureCity();
+  BeginMode3D(cam);
+  DrawGround();
+  DrawBuildings3D();
+  DrawTraffic3D();
+  DrawProps();
+  EndMode3D();
+}
+
+void World::Draw(int sw, int sh) {
+  // 2D fallback path: dark sky, no blue void
+  Color top = timeOfDay_ > 18.f || timeOfDay_ < 6.f ? Color{8, 10, 28, 255} : Color{40, 90, 160, 255};
+  DrawRectangle(0, 0, sw, sh, top);
+  // simple horizon
+  DrawRectangle(0, sh * 2 / 3, sw, sh / 3, Color{30, 30, 36, 255});
 }
 
 std::string World::CurrentCityName() const {
-  const City* c = Current();
+  auto* c = FindCity(cityId_);
   return c ? c->name : cityId_;
 }
 
 const City* World::Current() const { return FindCity(cityId_); }
 
 void World::SetCity(const std::string& id) {
-  if (FindCity(id)) cityId_ = id;
-}
-
-void World::DrawSky(int sw, int sh) {
-  float t = timeOfDay_;
-  if (fabsf(t - lastSkyT_) > 0.05f) {
-    lastSkyT_ = t;
-    if (t < 6.f || t > 21.f) {
-      skyTop_ = {6, 6, 18, 255};
-      skyBot_ = {14, 10, 28, 255};
-    } else if (t < 8.f || t > 19.f) {
-      skyTop_ = {100, 48, 70, 255};
-      skyBot_ = {180, 90, 60, 255};
-    } else if (t < 10.f) {
-      skyTop_ = {70, 120, 190, 255};
-      skyBot_ = {180, 200, 230, 255};
-    } else {
-      skyTop_ = {45, 110, 200, 255};
-      skyBot_ = {140, 180, 230, 255};
-    }
-  }
-  DrawRectangleGradientV(0, 0, sw, sh, skyTop_, skyBot_);
-  // stars at night
-  if (t < 6.f || t > 20.f) {
-    for (int i = 0; i < 40; ++i) {
-      int sx = (i * 97 + (int)scroll_) % sw;
-      int sy = (i * 53) % (sh / 2);
-      DrawPixel(sx, sy, Color{200, 200, 230, 180});
-    }
+  if (FindCity(id)) {
+    cityId_ = id;
+    ready_ = false;
+    EnsureCity();
   }
 }
 
-void World::DrawBuildings(int sw, int sh) {
-  EnsureBuildings(sw);
-  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
-  float groundY = sh * 0.72f;
-
-  for (auto& b : buildings_) {
-    float x = fmodf(b.baseX * sw * 1.4f - scroll_ * 12.f, (float)sw + 120.f) - 60.f;
-    float h = (float)b.height;
-    float w = (float)b.width;
-    float y = groundY - h;
-    Color wall = {(unsigned char)(18 + (b.seed % 20)), (unsigned char)(20 + (b.seed % 15)),
-                  (unsigned char)(28 + (b.seed % 25)), 255};
-    DrawRectangle((int)x, (int)y, (int)w, (int)h, wall);
-    // cornice
-    DrawRectangle((int)x - 2, (int)y, (int)w + 4, 6, Color{40, 40, 50, 255});
-    // windows
-    int cols = std::max(2, (int)w / 14);
-    int rows = std::max(2, (int)h / 18);
-    for (int r = 0; r < rows; ++r) {
-      for (int c = 0; c < cols; ++c) {
-        int wx = (int)x + 4 + c * ((int)w / cols);
-        int wy = (int)y + 10 + r * ((int)h / rows);
-        int lit = ((b.seed + r * 3 + c * 7 + (int)timeOfDay_) % 5);
-        Color win = night ? (lit < 3 ? Color{255, 210, 120, 220} : Color{20, 25, 40, 255})
-                          : Color{120, 160, 200, 100};
-        DrawRectangle(wx, wy, 8, 10, win);
-      }
-    }
-    // neon sign on some buildings
-    if (b.seed % 4 == 0) {
-      const char* signs[] = {"CASINO", "CLUB", "AZS", "SHOP", "GARAGE"};
-      const char* s = signs[b.seed % 5];
-      Color neon = b.seed % 2 ? Color{255, 40, 90, 255} : Color{0, 220, 255, 255};
-      DrawRectangle((int)x + 4, (int)y + 14, (int)w - 8, 16, Fade(neon, 0.25f));
-      DrawText(s, (int)x + 8, (int)y + 16, 10, neon);
-    }
+int World::NearHouseIndex(Vector3 playerPos, float radius) const {
+  for (size_t i = 0; i < buildings3_.size(); ++i) {
+    float dx = buildings3_[i].pos.x - playerPos.x;
+    float dz = buildings3_[i].pos.z - playerPos.z;
+    if (dx * dx + dz * dz < radius * radius) return (int)i;
   }
+  return -1;
 }
 
-void World::DrawGround(int sw, int sh) {
-  float groundY = sh * 0.72f;
-  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
-  DrawRectangle(0, (int)groundY, sw, sh - (int)groundY, night ? Color{22, 22, 28, 255} : Color{40, 42, 48, 255});
-  // road
-  float roadY = groundY + 20.f;
-  DrawRectangle(0, (int)roadY, sw, 48, Color{28, 28, 32, 255});
-  // lane marks
-  for (int i = 0; i < sw / 40 + 2; ++i) {
-    float lx = fmodf(i * 40.f - scroll_ * 40.f, (float)sw + 40.f);
-    DrawRectangle((int)lx, (int)roadY + 22, 20, 4, Color{200, 200, 120, 200});
+bool World::TryBuyHouse(int idx, Character& p, std::string& msg) {
+  if (idx < 0 || idx >= (int)buildings3_.size()) { msg = "Нет дома"; return false; }
+  auto& b = buildings3_[idx];
+  if (b.owned) { msg = "Уже куплен"; return false; }
+  if (p.Money() < b.price) {
+    msg = std::string("Нужно ") + ArtworkRenderer::FormatRub(b.price);
+    return false;
   }
-  // sidewalks
-  DrawRectangle(0, (int)groundY, sw, 18, Color{48, 48, 56, 255});
-  DrawRectangle(0, (int)roadY + 48, sw, 14, Color{48, 48, 56, 255});
-  // crosswalk
-  float cx = fmodf(sw * 0.4f - scroll_ * 10.f, (float)sw);
-  for (int i = 0; i < 6; ++i)
-    DrawRectangle((int)cx + i * 10, (int)roadY + 4, 6, 40, Color{220, 220, 230, 180});
+  p.AddMoney(-b.price);
+  b.owned = true;
+  p.Inv().houses.push_back("house_" + std::to_string(idx));
+  msg = "Дом куплен!";
+  return true;
 }
 
-void World::DrawTraffic(int sw, int sh) {
-  float roadY = sh * 0.72f + 28.f;
-  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
-  for (int i = 0; i < 6; ++i) {
-    float speed = 40.f + (i % 3) * 25.f;
-    float x = fmodf(i * 220.f + trafficT_ * speed, (float)sw + 100.f) - 50.f;
-    Color body = {(unsigned char)(40 + i * 30), (unsigned char)(40 + (i * 50) % 120),
-                  (unsigned char)(50 + i * 20), 255};
-    DrawRectangleRounded(Rectangle{x, roadY, 54, 18}, 0.3f, 4, body);
-    DrawRectangleRounded(Rectangle{x + 12, roadY - 10, 28, 12}, 0.2f, 4, shade_body(body));
-    DrawCircle((int)(x + 12), (int)(roadY + 18), 5, BLACK);
-    DrawCircle((int)(x + 42), (int)(roadY + 18), 5, BLACK);
-    if (night) {
-      DrawRectangle((int)(x + 50), (int)(roadY + 4), 6, 4, Color{255, 240, 180, 255});
-      DrawRectangle((int)x - 2, (int)(roadY + 4), 4, 4, Color{220, 40, 40, 255});
-    }
-  }
-}
-
-void World::DrawPedestrians(int sw, int sh) {
-  float walkY = sh * 0.72f + 6.f;
-  for (int i = 0; i < 8; ++i) {
-    float x = fmodf(i * 160.f + pedT_ * (20.f + i * 3.f) * ((i % 2) ? 1.f : -1.f), (float)sw + 40.f);
-    if (x < 0) x += sw + 40.f;
-    float bob = sinf(pedT_ * 8.f + i) * 2.f;
-    Color skin = {210, 170, 140, 255};
-    Color cloth = {(unsigned char)(40 + i * 20), (unsigned char)(40 + i * 10), 70, 255};
-    DrawRectangle((int)x, (int)(walkY - 18 + bob), 8, 14, cloth);
-    DrawCircle((int)(x + 4), (int)(walkY - 24 + bob), 5, skin);
-    DrawRectangle((int)x, (int)(walkY - 4 + bob), 3, 10, Color{30, 30, 40, 255});
-    DrawRectangle((int)x + 5, (int)(walkY - 4 + bob), 3, 10, Color{30, 30, 40, 255});
-  }
-}
-
-void World::DrawStreetProps(int sw, int sh) {
-  float groundY = sh * 0.72f;
-  bool night = timeOfDay_ < 6.5f || timeOfDay_ > 19.5f;
-  for (int i = 0; i < sw / 120 + 1; ++i) {
-    float x = fmodf(i * 120.f - scroll_ * 8.f, (float)sw + 40.f);
-    // lamp
-    DrawRectangle((int)x, (int)groundY - 50, 4, 50, Color{60, 60, 70, 255});
-    DrawCircle((int)x + 2, (int)groundY - 52, 6, night ? Color{255, 230, 150, 255} : Color{180, 180, 190, 255});
-    if (night) {
-      DrawTriangle(Vector2{(float)x + 2, groundY - 52}, Vector2{(float)x - 30, groundY},
-                   Vector2{(float)x + 34, groundY}, Fade(Color{255, 220, 140, 255}, 0.12f));
-    }
-  }
-}
-
-void World::Draw(int sw, int sh) {
-  DrawSky(sw, sh);
-  DrawBuildings(sw, sh);
-  DrawGround(sw, sh);
-  DrawStreetProps(sw, sh);
-  DrawTraffic(sw, sh);
-  DrawPedestrians(sw, sh);
-
-  // city label
-  char buf[64];
-  snprintf(buf, sizeof(buf), "%s  %.0f:00", CurrentCityName().c_str(), timeOfDay_);
-  DrawRectangle(12, 12, 260, 28, Color{0, 0, 0, 140});
-  DrawText(buf, 20, 18, 16, WHITE);
+bool World::EnterHouse(int idx) {
+  if (idx < 0 || idx >= (int)buildings3_.size()) return false;
+  if (!buildings3_[idx].owned) return false;
+  interiorHouse_ = idx;
+  return true;
 }
