@@ -255,6 +255,10 @@ void FontUI::DrawCentered(const char* text, float cx, float y, float size, Color
   Draw(text, cx - w * 0.5f, y, size, color);
 }
 
+void FontUI::DrawCentered(const std::string& text, float cx, float y, float size, Color color) {
+  DrawCentered(text.c_str(), cx, y, size, color);
+}
+
 void FontUI::DrawShadow(const char* text, float x, float y, float size, Color color, Color shadow) {
   float o = size / 10.f;
   if (o < 1.f) o = 1.f;
