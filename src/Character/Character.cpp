@@ -1,3 +1,4 @@
+#include "raylib.h"
 #include "raymath.h"
 #include "Character.hpp"
 #include "Core/FontUI.hpp"
