@@ -163,16 +163,22 @@ bool SaveSystem::Save(const Character& p, const World& w) {
 }
 
 bool SaveSystem::Load(Character& p, World& w) {
-  std::ifstream file(Path(), std::ios::binary);
-  if (!file) return false;
-
   json root;
-  try {
-    file >> root;
-  } catch (...) {
+  auto readSave = [](const std::string& path, json& destination) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file) return false;
+    try {
+      file >> destination;
+      return destination.is_object();
+    } catch (...) {
+      return false;
+    }
+  };
+
+  // Recover the last known-good snapshot if the primary file was interrupted
+  // or damaged during a previous write.
+  if (!readSave(Path(), root) && !readSave(Path() + ".bak", root))
     return false;
-  }
-  if (!root.is_object()) return false;
 
   // Migrate the original flat save format (schema v1) in memory.
   if (!root.contains("character")) {
