@@ -6,8 +6,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
+# Compiler flags AFTER project() — MSVC vs GCC/Clang
+if(MSVC)
+  add_compile_options(/utf-8 /Zc:char8_t-)
+else()
+  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8 -fno-char8_t)
 endif()
 
 include(FetchContent)
@@ -95,8 +102,7 @@ target_link_libraries(botbandit PRIVATE raylib nlohmann_json::nlohmann_json)
 target_compile_features(botbandit PRIVATE cxx_std_20)
 
 if(MSVC)
-  add_compile_options(/Zc:char8_t-)
-  target_compile_options(botbandit PRIVATE /W3 /permissive- /utf-8 /EHsc)
+  target_compile_options(botbandit PRIVATE /W3 /permissive- /EHsc)
   target_compile_definitions(botbandit PRIVATE _CRT_SECURE_NO_WARNINGS)
 else()
   target_compile_options(botbandit PRIVATE -Wall -Wextra)
@@ -123,23 +129,23 @@ if(WIN32)
   add_executable(LifeSim3D_Setup
     installer/setup_main.cpp
     installer/win_admin.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc
   )
-  target_include_directories(LifeSim3D_Setup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+  if(MSVC)
+    target_sources(LifeSim3D_Setup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc)
+  endif()
+  target_include_directories(LifeSim3D_Setup PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/installer
+  )
   set_target_properties(LifeSim3D_Setup PROPERTIES OUTPUT_NAME BotBandit_Setup)
   target_link_libraries(LifeSim3D_Setup PRIVATE raylib winmm shell32 ole32 uuid advapi32 winhttp)
   target_compile_features(LifeSim3D_Setup PRIVATE cxx_std_20)
   if(MSVC)
-    target_compile_options(LifeSim3D_Setup PRIVATE /W3 /permissive- /utf-8 /EHsc)
+    target_compile_options(LifeSim3D_Setup PRIVATE /W3 /permissive- /EHsc)
     target_compile_definitions(LifeSim3D_Setup PRIVATE _CRT_SECURE_NO_WARNINGS)
   endif()
-  add_custom_command(TARGET LifeSim3D_Setup POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:LifeSim3D_Setup>/assets
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:LifeSim3D_Setup>/assets
-  )
 endif()
 
-# Optional character texture prep (Pillow)
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_FOUND)
   add_custom_target(prep_character

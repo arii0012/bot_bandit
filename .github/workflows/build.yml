@@ -18,19 +18,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Enable MSVC developer command prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Prepare character textures
         continue-on-error: true
         run: |
           pip install Pillow || pip3 install Pillow || true
           python tools/prepare_character_assets.py || python3 tools/prepare_character_assets.py || true
 
-      - name: Configure
+      - name: Configure (MSVC + Ninja)
+        shell: cmd
         run: |
-          choco install ninja -y --no-progress
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja -DCMAKE_CXX_FLAGS="/utf-8 /Zc:char8_t-"
+          where cl
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
 
       - name: Build
-        run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+        shell: cmd
+        run: cmake --build build --config %BUILD_TYPE% --parallel
 
       - name: Stage game zip and setup
         shell: pwsh
@@ -91,6 +98,6 @@ jobs:
             libasound2-dev libx11-dev libxrandr-dev libxi-dev \
             libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
       - name: Configure
-        run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
       - name: Build
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
