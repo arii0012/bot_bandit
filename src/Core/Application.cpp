@@ -514,7 +514,7 @@ void Application::DrawHUD() {
   }
 }
 
-void Application::DrawPauseMenu {
+void Application::DrawPauseMenu() {
   int sw = screenW_, sh = screenH_;
   DrawRectangle(0, 0, sw, sh, Color{0, 0, 0, 160});
   float w = 360, h = 220;
