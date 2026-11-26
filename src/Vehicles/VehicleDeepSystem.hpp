@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 
 class VehicleDeepSystem {
 public:
@@ -85,15 +86,15 @@ public:
 
   void DrawGarageStats(float x, float y) {
     if (!owned_) {
-      FontUI::Get().Draw("Net avto - kupi VAZ/Prioru", x, y, 16, Color{180, 180, 200, 255});
+      FontUI::Get().Draw("Нет автомобиля — купи ВАЗ или Приору", x, y, 16, Color{180, 180, 200, 255});
       return;
     }
     char buf[128];
-    snprintf(buf, sizeof(buf), "ECU Stage %d  |  %d l.s.  |  Hide %d  |  Gryaz %.0f%%",
+    snprintf(buf, sizeof(buf), "Этап ЭБУ %d  |  %d л.с.  |  Скрытие %d  |  Грязь %.0f%%",
              ecuStage_, DynoHP(), hideLevel_, dirt_ * 100.f);
     FontUI::Get().Draw(buf, x, y, 14, WHITE);
-    snprintf(buf, sizeof(buf), "Strahovka: %s  |  HP kuzova %.0f",
-             insured_ ? "da" : "net", hp_);
+    snprintf(buf, sizeof(buf), "Страховка: %s  |  Прочность кузова %.0f",
+             insured_ ? "да" : "нет", hp_);
     FontUI::Get().Draw(buf, x, y + 22, 14, Color{200, 200, 160, 255});
   }
 
