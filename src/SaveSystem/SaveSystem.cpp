@@ -312,9 +312,11 @@ bool SaveSystem::Load(Character& p, World& w) {
     if (!city.empty()) {
       w.SetCity(city);
       p.SetCity(city);
+      w.SyncOwnedHouses(p);
     }
   } else if (!p.cityId_.empty()) {
     w.SetCity(p.cityId_);
+    w.SyncOwnedHouses(p);
   }
 
   return true;
