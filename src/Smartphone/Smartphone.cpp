@@ -45,9 +45,9 @@ void Smartphone::DrawFrame(Rectangle phone) {
 }
 
 void Smartphone::DrawHome(Rectangle c) {
-  DrawTextRu("BOT PHONE", (int)(c.x + 16), (int)(c.y + 8), 18, Config::ColGold());
-  const char* names[] = {"Банк", "Крипта", "DarkNet", "Соцсеть", "Такси", "Музыка"};
-  PhoneApp apps[] = {PhoneApp::Bank, PhoneApp::Crypto, PhoneApp::DarkNet, PhoneApp::Social, PhoneApp::Taxi, PhoneApp::Music};
+  DrawTextRu("ТЕЛЕФОН", (int)(c.x + 16), (int)(c.y + 8), 18, Config::ColGold());
+  const char* names[] = {"Банк", "Криптовалюта", "Даркнет", "Соцсеть", "Такси", "Музыка"};
+  PhoneApp apps[] = {PhoneApp::Bank, PhoneApp::Crypto, PhoneApp::Даркнет, PhoneApp::Social, PhoneApp::Taxi, PhoneApp::Music};
   for (int i = 0; i < 6; ++i) {
     float bx = c.x + 16 + (i % 2) * (c.width * 0.5f - 12);
     float by = c.y + 40 + (i / 2) * 70;
@@ -106,10 +106,10 @@ void Smartphone::DrawCrypto(Rectangle c) {
     currentApp_ = PhoneApp::Home;
 }
 
-void Smartphone::DrawDarkNet(Rectangle c) {
+void Smartphone::DrawДаркнет(Rectangle c) {
   auto* p = app_->Player();
   auto* city = app_->GetWorld()->Current();
-  DrawTextRu("DARKNET", (int)c.x + 16, (int)c.y + 8, 20, Config::ColDanger());
+  DrawTextRu("ДАРКНЕТ", (int)c.x + 16, (int)c.y + 8, 20, Config::ColDanger());
   bool allowed = city && (city->id == "москва" || city->id == "питер" || city->id == "владивосток");
   if (!allowed) {
     DrawTextRu("Доступно: Москва, Питер, Владивосток", (int)c.x + 12, (int)c.y + 50, 14, Config::ColMuted());
@@ -129,11 +129,11 @@ void Smartphone::DrawDarkNet(Rectangle c) {
         SetStatus("Тепло снижено");
       } else SetStatus("Нужно 40000");
     }
-    if (AppButton({c.x + 16, c.y + 150, c.width - 32, 40}, "SMG 185к", Config::ColDanger())) {
+    if (AppButton({c.x + 16, c.y + 150, c.width - 32, 40}, "Автомат 185к", Config::ColDanger())) {
       if (p->Money() >= 185000) {
         p->AddMoney(-185000);
-        p->Inv().weapons.push_back("SMG");
-        SetStatus("SMG куплен");
+        p->Inv().weapons.push_back("Автомат");
+        SetStatus("Автомат куплен");
       } else SetStatus("Нужно 185000");
     }
   }
@@ -185,11 +185,11 @@ void Smartphone::Draw(int sw, int sh) {
     case PhoneApp::Home: DrawHome(content); break;
     case PhoneApp::Bank: DrawBank(content); break;
     case PhoneApp::Crypto: DrawCrypto(content); break;
-    case PhoneApp::DarkNet: DrawDarkNet(content); break;
+    case PhoneApp::Даркнет: DrawДаркнет(content); break;
     case PhoneApp::Social: DrawSocial(content); break;
     case PhoneApp::Taxi: DrawTaxi(content); break;
     case PhoneApp::Music:
-      DrawTextRu("Плеер: BGM", (int)content.x + 16, (int)content.y + 40, 18, Config::ColText());
+      DrawTextRu("Плеер: музыка", (int)content.x + 16, (int)content.y + 40, 18, Config::ColText());
       if (AppButton({content.x + 16, content.y + content.height - 50, content.width - 32, 36}, "Назад", Config::ColMuted()))
         currentApp_ = PhoneApp::Home;
       break;
