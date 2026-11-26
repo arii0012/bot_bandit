@@ -1,13 +1,11 @@
-name: Build BotBandit
+name: Build
 
 on:
   push:
-    branches: [main, master]
+    branches: [ main, master ]
+    tags: [ "v*" ]
   pull_request:
-    branches: [main, master]
   workflow_dispatch:
-  release:
-    types: [published]
 
 env:
   BUILD_TYPE: Release
@@ -18,23 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Optional Blender GLB
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          if (Test-Path tools/generate_blender_assets.py) {
-            choco install blender -y --no-progress
-            $b = Get-ChildItem "C:\Program Files\Blender Foundation" -Recurse -Filter blender.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($b) {
-              New-Item -ItemType Directory -Force -Path assets/models | Out-Null
-              & $b.FullName --background --python tools/generate_blender_assets.py
-            }
-          }
-
-      
       - name: Prepare character textures
         continue-on-error: true
         run: |
@@ -44,7 +25,7 @@ jobs:
       - name: Configure
         run: |
           choco install ninja -y --no-progress
-          cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja -DCMAKE_CXX_FLAGS="/utf-8"
+          cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja -DCMAKE_CXX_FLAGS="/utf-8 /Zc:char8_t-"
 
       - name: Build
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
@@ -60,21 +41,32 @@ jobs:
           if ($setup) { Copy-Item $setup.FullName stage/LifeSim3D_Setup.exe }
           if (Test-Path assets) { Copy-Item -Recurse assets stage/ }
           if (Test-Path shaders) { Copy-Item -Recurse shaders stage/ }
-          New-Item -ItemType Directory -Force -Path stage/data | Out-Null
+          if (Test-Path data) { Copy-Item -Recurse data stage/ } else { New-Item -ItemType Directory -Force -Path stage/data | Out-Null }
           Compress-Archive -Path stage/* -DestinationPath BotBandit-Windows-x64.zip -Force
+          Get-FileHash BotBandit-Windows-x64.zip -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  BotBandit-Windows-x64.zip" } |
+            Out-File -Encoding ascii SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
         with:
           name: BotBandit-Windows-x64
-          path: BotBandit-Windows-x64.zip
+          path: |
+            BotBandit-Windows-x64.zip
+            SHA256SUMS.txt
           retention-days: 14
 
-      - uses: actions/upload-artifact@v4
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
         with:
-          name: LifeSim3D-Setup
-          path: stage/LifeSim3D_Setup.exe
-          retention-days: 14
-          if-no-files-found: warn
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+          name: BotBandit ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
+          files: |
+            BotBandit-Windows-x64.zip
+            SHA256SUMS.txt
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-linux:
     runs-on: ubuntu-latest
@@ -88,21 +80,11 @@ jobs:
             libasound2-dev libx11-dev libxrandr-dev libxi-dev \
             libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
 
-      - name: Optional Blender GLB
-        continue-on-error: true
-        run: |
-          if [ -f tools/generate_blender_assets.py ]; then
-            sudo apt-get install -y blender || true
-            mkdir -p assets/models
-            command -v blender >/dev/null && blender --background --python tools/generate_blender_assets.py || true
-          fi
-
-      
       - name: Prepare character textures
         continue-on-error: true
         run: |
-          pip install Pillow || pip3 install Pillow || true
-          python tools/prepare_character_assets.py || python3 tools/prepare_character_assets.py || true
+          pip3 install Pillow || true
+          python3 tools/prepare_character_assets.py || true
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja
@@ -112,36 +94,17 @@ jobs:
 
       - name: Package
         run: |
-          mkdir -p dist
-          BIN=$(find build -name botbandit -type f | head -1)
-          test -n "$BIN"
-          cp "$BIN" dist/botbandit
-          cp -r assets dist/ 2>/dev/null || true
-          cp -r shaders dist/ 2>/dev/null || true
-          cd dist && tar -czvf ../BotBandit-Linux-x64.tar.gz .
+          mkdir -p stage
+          cp build/botbandit stage/ 2>/dev/null || find build -name botbandit -type f -exec cp {} stage/ \;
+          cp -r assets shaders stage/ 2>/dev/null || true
+          mkdir -p stage/data
+          tar -czf BotBandit-Linux-x64.tar.gz -C stage .
+          sha256sum BotBandit-Linux-x64.tar.gz > SHA256SUMS-linux.txt
 
       - uses: actions/upload-artifact@v4
         with:
           name: BotBandit-Linux-x64
-          path: BotBandit-Linux-x64.tar.gz
+          path: |
+            BotBandit-Linux-x64.tar.gz
+            SHA256SUMS-linux.txt
           retention-days: 14
-
-  release:
-    needs: [build-windows, build-linux]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            artifacts/BotBandit-Windows-x64/BotBandit-Windows-x64.zip
-            artifacts/LifeSim3D-Setup/LifeSim3D_Setup.exe
-            artifacts/BotBandit-Linux-x64/BotBandit-Linux-x64.tar.gz
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

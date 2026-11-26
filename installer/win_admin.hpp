@@ -1,10 +1,11 @@
 #pragma once
 #include <string>
 
-bool IsRunningAsAdmin();
-bool RelaunchAsAdmin();
-bool NeedsAdminPath(const std::string& path);
-std::string BrowseFolderDialog();
-bool CreateDesktopShortcut(const std::string& targetExe, const std::string& workDir, const std::string& linkName);
-void LaunchInstalledGame(const std::string& exePath, const std::string& workDir);
-std::string GetModuleDirectory();
+// No elevation. Install under %LOCALAPPDATA%\BotBandit only.
+namespace WinAdmin {
+  std::string DefaultInstallDir();
+  bool EnsureDir(const std::string& path);
+  bool CopyTree(const std::string& src, const std::string& dst);
+  bool CreateDesktopShortcut(const std::string& exePath, const std::string& name);
+  bool LaunchExe(const std::string& exePath);
+}

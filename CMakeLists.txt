@@ -71,6 +71,9 @@ set(GAME_SOURCES
 )
 
 add_executable(botbandit ${GAME_SOURCES})
+if(WIN32 AND MSVC)
+  target_sources(botbandit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc)
+endif()
 
 target_include_directories(botbandit PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -120,6 +123,7 @@ if(WIN32)
   add_executable(LifeSim3D_Setup
     installer/setup_main.cpp
     installer/win_admin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc
   )
   target_include_directories(LifeSim3D_Setup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/installer)
   target_link_libraries(LifeSim3D_Setup PRIVATE raylib winmm shell32 ole32 uuid advapi32)
