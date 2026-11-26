@@ -255,7 +255,12 @@ void Application::Update() {
       return;
     }
     if (state_ == AppState::Pause) { state_ = AppState::Playing; return; }
-    if (state_ == AppState::Playing) { state_ = AppState::Pause; return; }
+    if (state_ == AppState::Playing) {
+      if (saves_ && player_ && world_) saves_->Save(*player_, *world_);
+      autosaveTimer_ = 0.f;
+      state_ = AppState::Pause;
+      return;
+    }
     if (state_ == AppState::MainMenu) { /* stay */ return; }
   }
 
@@ -284,6 +289,14 @@ void Application::Update() {
     if (systems_) systems_->Update(dt_);
     if (player_) player_->Update(dt_);
     if (world_) world_->Update(dt_);
+
+    // Save progress periodically while playing; the destructor remains a final fallback.
+    autosaveTimer_ += dt_;
+    if (autosaveTimer_ >= 60.f) {
+      autosaveTimer_ = 0.f;
+      if (saves_ && player_ && world_ && !saves_->Save(*player_, *world_) && ui_)
+        ui_->Toast("Не удалось сохранить игру");
+    }
     if (weather_ && world_) weather_->Update(dt_, world_->TimeOfDay());
     if (cutscenes_) cutscenes_->Update(dt_);
 

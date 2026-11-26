@@ -74,6 +74,7 @@ private:
   int screenH_ = 720;
   bool running_ = true;
   float dt_ = 0.f;
+  float autosaveTimer_ = 0.f;
   AppState state_ = AppState::Boot;
 
   std::unique_ptr<AssetManager> assets_;
