@@ -47,7 +47,7 @@ void Smartphone::DrawFrame(Rectangle phone) {
 void Smartphone::DrawHome(Rectangle c) {
   DrawTextRu("ТЕЛЕФОН", (int)(c.x + 16), (int)(c.y + 8), 18, Config::ColGold());
   const char* names[] = {"Банк", "Криптовалюта", "Даркнет", "Соцсеть", "Такси", "Музыка"};
-  PhoneApp apps[] = {PhoneApp::Bank, PhoneApp::Crypto, PhoneApp::Даркнет, PhoneApp::Social, PhoneApp::Taxi, PhoneApp::Music};
+  PhoneApp apps[] = {PhoneApp::Bank, PhoneApp::Crypto, PhoneApp::DarkNet, PhoneApp::Social, PhoneApp::Taxi, PhoneApp::Music};
   for (int i = 0; i < 6; ++i) {
     float bx = c.x + 16 + (i % 2) * (c.width * 0.5f - 12);
     float by = c.y + 40 + (i / 2) * 70;
@@ -106,7 +106,7 @@ void Smartphone::DrawCrypto(Rectangle c) {
     currentApp_ = PhoneApp::Home;
 }
 
-void Smartphone::DrawДаркнет(Rectangle c) {
+void Smartphone::DrawDarkNet(Rectangle c) {
   auto* p = app_->Player();
   auto* city = app_->GetWorld()->Current();
   DrawTextRu("ДАРКНЕТ", (int)c.x + 16, (int)c.y + 8, 20, Config::ColDanger());
@@ -185,7 +185,7 @@ void Smartphone::Draw(int sw, int sh) {
     case PhoneApp::Home: DrawHome(content); break;
     case PhoneApp::Bank: DrawBank(content); break;
     case PhoneApp::Crypto: DrawCrypto(content); break;
-    case PhoneApp::Даркнет: DrawДаркнет(content); break;
+    case PhoneApp::DarkNet: DrawDarkNet(content); break;
     case PhoneApp::Social: DrawSocial(content); break;
     case PhoneApp::Taxi: DrawTaxi(content); break;
     case PhoneApp::Music:
