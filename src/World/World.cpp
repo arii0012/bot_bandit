@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <algorithm>
+#include <random>
 
 World::World() { EnsureCity(); }
 
@@ -14,36 +15,50 @@ void World::EnsureCity() {
   if (ready_) return;
   buildings3_.clear();
   traffic_.clear();
-  // grid of buildings along roads
+
+  // Use a city-specific local generator so the same city keeps the same
+  // buildings and property indices after travel or loading a save.
+  std::uint32_t seed = 2166136261u;
+  for (unsigned char ch : cityId_) {
+    seed ^= static_cast<std::uint32_t>(ch);
+    seed *= 16777619u;
+  }
+  std::mt19937 rng(seed);
+  auto range = [&rng](int minValue, int maxValue) {
+    return std::uniform_int_distribution<int>(minValue, maxValue)(rng);
+  };
+
   int id = 0;
   for (int z = -4; z <= 4; ++z) {
     for (int x = -5; x <= 5; ++x) {
-      if ((x == 0 && (z == 0 || z == 1)) || (z == 0 && abs(x) <= 1)) continue; // road free
+      if ((x == 0 && (z == 0 || z == 1)) || (z == 0 && abs(x) <= 1)) continue;
       Building3D b{};
-      b.pos = {(float)x * 8.f + (float)(GetRandomValue(-10, 10) / 10.f), 0.f,
-               (float)z * 10.f + (float)(GetRandomValue(-10, 10) / 10.f)};
-      b.w = 3.5f + GetRandomValue(0, 20) / 10.f;
-      b.d = 3.5f + GetRandomValue(0, 20) / 10.f;
-      b.h = 6.f + GetRandomValue(0, 40) / 5.f;
-      b.wall = Color{(unsigned char)GetRandomValue(40, 90),
-                     (unsigned char)GetRandomValue(40, 90),
-                     (unsigned char)GetRandomValue(50, 100), 255};
-      b.price = 250000 + GetRandomValue(0, 40) * 25000;
+      b.pos = {static_cast<float>(x) * 8.f + range(-10, 10) / 10.f,
+               0.f,
+               static_cast<float>(z) * 10.f + range(-10, 10) / 10.f};
+      b.w = 3.5f + range(0, 20) / 10.f;
+      b.d = 3.5f + range(0, 20) / 10.f;
+      b.h = 6.f + range(0, 40) / 5.f;
+      b.wall = Color{static_cast<unsigned char>(range(40, 90)),
+                     static_cast<unsigned char>(range(40, 90)),
+                     static_cast<unsigned char>(range(50, 100)), 255};
+      b.price = 250000 + range(0, 40) * 25000;
       b.owned = false;
       buildings3_.push_back(b);
       if (++id >= 36) break;
     }
     if (id >= 36) break;
   }
+
   for (int i = 0; i < 12; ++i) {
-    TrafficCar c{};
-    c.pos = { -30.f + i * 6.f, 0.f, (i % 2 == 0) ? 0.f : 3.5f };
-    c.speed = 6.f + GetRandomValue(0, 40) / 10.f;
-    c.yaw = (i % 2 == 0) ? 0.f : 3.14159f;
-    c.body = Color{(unsigned char)GetRandomValue(40, 220),
-                   (unsigned char)GetRandomValue(40, 220),
-                   (unsigned char)GetRandomValue(40, 220), 255};
-    traffic_.push_back(c);
+    TrafficCar car{};
+    car.pos = {-30.f + i * 6.f, 0.f, (i % 2 == 0) ? 0.f : 3.5f};
+    car.speed = 6.f + range(0, 40) / 10.f;
+    car.yaw = (i % 2 == 0) ? 0.f : 3.14159f;
+    car.body = Color{static_cast<unsigned char>(range(40, 220)),
+                     static_cast<unsigned char>(range(40, 220)),
+                     static_cast<unsigned char>(range(40, 220)), 255};
+    traffic_.push_back(car);
   }
   ready_ = true;
 }
@@ -93,7 +108,10 @@ void World::DrawBuildings3D() {
         float wx = b.pos.x - b.w * 0.3f + w * (b.w * 0.3f);
         float wy = 1.2f + f * 2.2f;
         float wz = b.pos.z + b.d * 0.51f;
-        Color win = (GetRandomValue(0, 3) == 0) ? Color{255, 220, 120, 220} : Color{30, 40, 60, 200};
+        const bool night = timeOfDay_ >= 18.f || timeOfDay_ < 6.f;
+        const bool lit = ((i * 7 + f * 3 + w * 5) % 4) == 0;
+        Color win = (night && lit) ? Color{255, 220, 120, 220}
+                                   : Color{30, 40, 60, 200};
         DrawCube(Vector3{wx, wy, wz}, 0.5f, 0.7f, 0.05f, win);
       }
     }
