@@ -51,8 +51,8 @@ void CharacterCreator::Update(float dt) {
 void CharacterCreator::Draw(int sw, int sh) {
   if (!open_ || !player_) return;
   DrawRectangle(0, 0, sw, sh, Color{10, 10, 18, 240});
-  FontUI::Get().Draw("STUDIA 360", 40, 24, 28, WHITE);
-  const char* tabs[] = {"Pol", "Glaza", "Volosy", "Tors", "Shtany", "Golova", "Obuv", "Aksess"};
+  FontUI::Get().Draw("СТУДИЯ 360°", 40, 24, 28, WHITE);
+  const char* tabs[] = {"Пол", "Глаза", "Волосы", "Торс", "Штаны", "Голова", "Обувь", "Аксесс"};
   for (int i = 0; i < 8; ++i) {
     Rectangle r{40.f + i * 100.f, 60.f, 94.f, 28.f};
     DrawRectangleRounded(r, 0.2f, 6, i == tab_ ? Color{255, 55, 95, 255} : Color{32, 32, 48, 255});
@@ -66,8 +66,8 @@ void CharacterCreator::Draw(int sw, int sh) {
     DrawRectangleRec(r, Palette(i));
     if (i == sel_) DrawRectangleLinesEx(r, 2.f, WHITE);
   }
-  FontUI::Get().Draw("TAB - vkladka  A/D - cvet  ENTER - primenit  ESC - nazad", 40, sh - 40.f, 14,
+  FontUI::Get().Draw("TAB — вкладка   A/D — цвет   ENTER — применить   ESC — назад", 40, sh - 40.f, 14,
                      Color{140, 140, 160, 255});
-  FontUI::Get().Draw(player_->GenderFemale() ? "Zhenskaya model" : "Muzhskaya model", 40, 230, 16,
+  FontUI::Get().Draw(player_->GenderFemale() ? "Женская модель" : "Мужская модель", 40, 230, 16,
                      Color{0, 220, 255, 255});
 }

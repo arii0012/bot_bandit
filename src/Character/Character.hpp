@@ -22,6 +22,9 @@ public:
   void Update(float dt);
   void Draw(float x, float y);
   void Draw3D(Vector3 pos, float scale = 1.f);
+  void LoadMeshModel();
+  void UnloadMeshModel();
+  void UpdateAnim(float dt);
   void DrawCar(float x, float y);
   float& Facing() { return facingAngle_; }
   void SetFacing(float a) { facingAngle_ = a; }

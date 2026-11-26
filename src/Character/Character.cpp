@@ -1,3 +1,4 @@
+#include "raymath.h"
 #include "Character.hpp"
 #include "Core/FontUI.hpp"
 #include "Core/Config.hpp"
@@ -194,105 +195,43 @@ void Character::Draw(float x, float y) {
 
 
 void Character::Draw3D(Vector3 pos, float scale) {
-  float t = animTime_;
-  float breath = sinf(t * 2.1f) * 0.03f * scale;
-  float walk = sinf(t * 9.f) * 0.15f * scale;
-  Color skin = female_ ? Color{232, 186, 162, 255} : Color{210, 168, 140, 255};
-  Color shirt = colorTop_;
-  Color pants = colorPants_;
-  Color shoes = colorShoes_;
-  for (auto& c : inv_.clothes) {
-    if (c.find("hoodie") != std::string::npos) shirt = {36, 42, 120, 255};
-    if (c.find("jacket") != std::string::npos || c.find("leather") != std::string::npos) shirt = {28, 28, 32, 255};
-    if (c.find("suit") != std::string::npos) { shirt = {24, 24, 32, 255}; pants = {20, 20, 28, 255}; }
+  LoadMeshModel();
+  float breathe = sinf(animTime_ * 2.2f) * 0.02f * scale;
+  Vector3 drawPos = {pos.x, pos.y + breathe, pos.z};
+
+  // contact shadow
+  DrawCylinder(Vector3{pos.x, 0.02f, pos.z}, 0.35f * scale, 0.45f * scale, 0.02f, 12, Fade(BLACK, 0.35f));
+
+  if (meshLoaded_ && mesh_.meshCount > 0) {
+    float yawDeg = facingAngle_ * RAD2DEG;
+    float s = scale * (female_ ? 0.92f : 1.05f);
+    Color tint = colorTop_;
+    DrawModelEx(mesh_, drawPos, Vector3{0, 1, 0}, yawDeg, Vector3{s, s, s}, tint);
+  } else {
+    // procedural detailed mesh fallback (volume body, not flat rectangles)
+    Color skin = female_ ? Color{230, 180, 160, 255} : Color{210, 168, 140, 255};
+    // legs
+    DrawCube(Vector3{pos.x - 0.12f * scale, 0.45f * scale, pos.z}, 0.16f * scale, 0.9f * scale, 0.16f * scale, colorPants_);
+    DrawCube(Vector3{pos.x + 0.12f * scale, 0.45f * scale, pos.z}, 0.16f * scale, 0.9f * scale, 0.16f * scale, colorPants_);
+    // shoes
+    DrawCube(Vector3{pos.x - 0.12f * scale, 0.06f * scale, pos.z + 0.04f * scale}, 0.18f * scale, 0.1f * scale, 0.28f * scale, colorShoes_);
+    DrawCube(Vector3{pos.x + 0.12f * scale, 0.06f * scale, pos.z + 0.04f * scale}, 0.18f * scale, 0.1f * scale, 0.28f * scale, colorShoes_);
+    // torso
+    float tw = female_ ? 0.38f : 0.48f;
+    DrawCube(Vector3{pos.x, 1.15f * scale, pos.z}, tw * scale, 0.7f * scale, 0.28f * scale, colorTop_);
+    // head
+    DrawSphere(Vector3{pos.x, 1.65f * scale, pos.z}, 0.22f * scale, skin);
+    // hair
+    DrawSphere(Vector3{pos.x, 1.78f * scale, pos.z}, 0.23f * scale, hairColor_);
+    // eyes
+    float side = cosf(facingAngle_);
+    DrawSphere(Vector3{pos.x - 0.07f * scale * side, 1.68f * scale, pos.z + 0.18f * scale}, 0.035f * scale, colorEyes_);
+    DrawSphere(Vector3{pos.x + 0.07f * scale * side, 1.68f * scale, pos.z + 0.18f * scale}, 0.035f * scale, colorEyes_);
+    // arms
+    float armSwing = sinf(animTime_ * 6.f) * 0.25f;
+    DrawCube(Vector3{pos.x - 0.32f * scale, 1.1f * scale + armSwing * 0.05f, pos.z}, 0.12f * scale, 0.55f * scale, 0.12f * scale, skin);
+    DrawCube(Vector3{pos.x + 0.32f * scale, 1.1f * scale - armSwing * 0.05f, pos.z}, 0.12f * scale, 0.55f * scale, 0.12f * scale, skin);
+    // rim light proxy - bright outline spheres low alpha
+    DrawSphereWires(Vector3{pos.x, 1.2f * scale, pos.z}, 0.55f * scale, 8, 8, Fade(Color{0, 210, 255, 255}, 0.15f));
   }
-  // soft contact shadow
-  DrawCylinder(Vector3{pos.x, pos.y + 0.02f, pos.z}, 0.45f * scale, 0.45f * scale, 0.02f, 12, Fade(BLACK, 0.35f));
-  // legs
-  DrawCubeV(Vector3{pos.x - 0.12f * scale, pos.y + 0.35f * scale + walk, pos.z}, Vector3{0.14f * scale, 0.55f * scale, 0.14f * scale}, pants);
-  DrawCubeV(Vector3{pos.x + 0.12f * scale, pos.y + 0.35f * scale - walk, pos.z}, Vector3{0.14f * scale, 0.55f * scale, 0.14f * scale}, pants);
-  DrawCubeV(Vector3{pos.x - 0.12f * scale, pos.y + 0.06f * scale + walk, pos.z + 0.04f * scale}, Vector3{0.16f * scale, 0.08f * scale, 0.22f * scale}, shoes);
-  DrawCubeV(Vector3{pos.x + 0.12f * scale, pos.y + 0.06f * scale - walk, pos.z + 0.04f * scale}, Vector3{0.16f * scale, 0.08f * scale, 0.22f * scale}, shoes);
-  // torso
-  DrawCubeV(Vector3{pos.x, pos.y + 0.95f * scale + breath, pos.z}, Vector3{0.42f * scale, 0.55f * scale, 0.24f * scale}, shirt);
-  // arms
-  DrawCubeV(Vector3{pos.x - 0.32f * scale, pos.y + 0.95f * scale - walk * 0.5f, pos.z}, Vector3{0.12f * scale, 0.45f * scale, 0.12f * scale}, shirt);
-  DrawCubeV(Vector3{pos.x + 0.32f * scale, pos.y + 0.95f * scale + walk * 0.5f, pos.z}, Vector3{0.12f * scale, 0.45f * scale, 0.12f * scale}, shirt);
-  DrawSphere(Vector3{pos.x - 0.32f * scale, pos.y + 0.68f * scale - walk * 0.5f, pos.z}, 0.07f * scale, skin);
-  DrawSphere(Vector3{pos.x + 0.32f * scale, pos.y + 0.68f * scale + walk * 0.5f, pos.z}, 0.07f * scale, skin);
-  // head
-  Vector3 hp{pos.x, pos.y + 1.45f * scale + breath, pos.z};
-  DrawSphere(hp, 0.18f * scale, skin);
-  // hair
-  DrawSphere(Vector3{hp.x, hp.y + 0.08f * scale, hp.z}, 0.17f * scale, hairColor_);
-  // eyes
-  DrawSphere(Vector3{hp.x - 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.14f * scale}, 0.03f * scale, WHITE);
-  DrawSphere(Vector3{hp.x + 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.14f * scale}, 0.03f * scale, WHITE);
-  DrawSphere(Vector3{hp.x - 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.16f * scale}, 0.015f * scale, BLACK);
-  DrawSphere(Vector3{hp.x + 0.06f * scale, hp.y + 0.02f * scale, hp.z + 0.16f * scale}, 0.015f * scale, BLACK);
-  // rim-ish outline using slightly larger dark sphere behind - skip in 3D, shader handles
-}
-
-void Character::DrawCar(float x, float y) {
-  if (activeCar_.empty()) return;
-  Color body = {carR_, carG_, carB_, 255};
-  Color bodyDark = Shade(body, 0.65f);
-  Color bodyLight = Shade(body, 1.2f);
-  float side = fabsf(sinf(facingAngle_));
-  int w = (int)(78 + side * 24);
-  int h = 30;
-  // shadow
-  DrawEllipse((int)x, (int)(y + 22), w / 2 + 6, 10, Fade(BLACK, 0.4f));
-  // body 3d
-  DrawRectangleRounded({x - w / 2.f, y - h / 2.f, (float)w, (float)h}, 0.35f, 8, body);
-  DrawRectangleRounded({x - w / 2.f, y - h / 2.f, w * 0.25f, (float)h}, 0.35f, 6, bodyDark);
-  DrawRectangleRounded({x + w * 0.15f, y - h / 2.f, w * 0.2f, (float)h}, 0.35f, 6, Fade(bodyLight, 0.4f));
-  // cabin
-  DrawRectangleRounded({x - w / 2.f + 14, y - h / 2.f - 14, (float)w - 28, 16}, 0.25f, 6, bodyDark);
-  DrawRectangleRounded({x - w / 2.f + 18, y - h / 2.f - 12, (float)w - 36, 10}, 0.2f, 4, Color{30, 40, 55, 200});
-  // wheels 3d
-  DrawCircle((int)(x - w / 3), (int)(y + h / 2), 9, Color{25, 25, 28, 255});
-  DrawCircle((int)(x - w / 3), (int)(y + h / 2), 5, Color{60, 60, 65, 255});
-  DrawCircle((int)(x + w / 3), (int)(y + h / 2), 9, Color{25, 25, 28, 255});
-  DrawCircle((int)(x + w / 3), (int)(y + h / 2), 5, Color{60, 60, 65, 255});
-  if (neonCar_)
-    DrawEllipse((int)x, (int)(y + h / 2 + 6), w / 2, 7, Fade(Color{0, 220, 255, 255}, 0.5f));
-  if (turboLvl_ > 0)
-    DrawTextRu("TURBO", (int)(x - 22), (int)(y - 42), 14, Color{244, 196, 48, 255});
-}
-
-void Character::AddHeat(int h) {
-  heat_ += h;
-  if (heat_ > 100) heat_ = 100;
-  if (heat_ < 0) heat_ = 0;
-  if (heat_ > 70 && wanted_ < 5 && GetRandomValue(0, 100) < 30)
-    wanted_++;
-}
-
-void Character::AddStat(const std::string& s, int v) {
-  if (s == "strength") strength_ += v;
-  else if (s == "agility") agility_ += v;
-  else if (s == "intelligence") intelligence_ += v;
-}
-
-int Character::Skill(const std::string& id) const {
-  auto it = skills_.find(id);
-  return it == skills_.end() ? 0 : it->second;
-}
-
-void Character::AddSkill(const std::string& id, int v) {
-  skills_[id] += v;
-}
-
-std::vector<std::string> Character::AddExp(int amount) {
-  std::vector<std::string> msgs;
-  exp_ += amount;
-  while (exp_ >= level_ * 140) {
-    exp_ -= level_ * 140;
-    level_++;
-    skillPoints_++;
-    money_ += 12000 + level_ * 800;
-    msgs.push_back("LEVEL " + std::to_string(level_) + "!");
-  }
-  return msgs;
 }
