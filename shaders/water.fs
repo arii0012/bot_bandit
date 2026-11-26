@@ -14,7 +14,7 @@ void main() {
   vec4 texel = texture(texture0, uv);
   vec3 N = normalize(fragNormal);
   vec3 V = normalize(viewPos - fragPos);
-  float fresnel = pow(1.0 - max(dot(V, N), 0.0), 3.0);
+  float fresnel = pow(1.0 - max(dot(V, N), 0.0), 5.0);
   vec3 deep = vec3(0.02, 0.12, 0.22);
   vec3 shallow = vec3(0.15, 0.45, 0.55);
   vec3 water = mix(deep, shallow, fresnel);
