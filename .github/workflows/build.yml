@@ -13,6 +13,7 @@ env:
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 45
     permissions:
       contents: write
     steps:
@@ -23,11 +24,17 @@ jobs:
         with:
           arch: x64
 
-      - name: Prepare character textures
-        continue-on-error: true
+      - name: Install texture conversion dependency
+        run: python -m pip install --disable-pip-version-check Pillow
+
+      - name: Prepare optional character textures
+        shell: pwsh
         run: |
-          pip install Pillow || pip3 install Pillow || true
-          python tools/prepare_character_assets.py || python3 tools/prepare_character_assets.py || true
+          if (Test-Path "third_party/Square_Character") {
+            python tools/prepare_character_assets.py "third_party/Square_Character"
+          } else {
+            Write-Host "Square_Character source is not present; skipping optional conversion."
+          }
 
       - name: Configure (MSVC + Ninja)
         shell: cmd
@@ -89,6 +96,7 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Deps
@@ -101,3 +109,18 @@ jobs:
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
       - name: Build
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+      - name: Stage Linux package
+        run: |
+          mkdir -p stage
+          cp build/botbandit stage/botbandit
+          cp -R assets shaders data stage/
+          tar -czf BotBandit-Linux-x64.tar.gz -C stage .
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BotBandit-Linux-x64
+          path: BotBandit-Linux-x64.tar.gz
+          retention-days: 14
+          if-no-files-found: error
