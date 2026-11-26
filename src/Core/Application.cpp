@@ -35,6 +35,8 @@
 #include "Systems/LifeSystems.hpp"
 #include "Systems/QuestSystem.hpp"
 #include "Systems/PoliceSystem.hpp"
+#include "Minigames/ContainerAuction.hpp"
+#include "Minigames/CardBluffMinigame.hpp"
 #include "Systems/CrimeAndRacketSystem.hpp"
 #include "UI/TravelScreen.hpp"
 #include "UI/ShopScreen.hpp"
@@ -343,6 +345,8 @@ void Application::Draw() {
     static VehicleDeepSystem vehicleDeep;
     static PoliceSystem police;
     static CrimeAndRacketSystem crimeNet;
+    static ContainerAuction auction;
+    static CardBluffMinigame cards;
     
     static bool tutStarted = false;
     if (!tutStarted && state_ == AppState::Playing) {
@@ -364,8 +368,14 @@ void Application::Draw() {
       }
       if (IsKeyPressed(KEY_R)) { radio.NextWave(); AudioEngine::Get().NextRadio(); }
       if (IsKeyPressed(KEY_J)) QuestSystem::Get().ToggleJournal();
+      if (IsKeyPressed(KEY_F7)) auction.Open();
+      if (IsKeyPressed(KEY_F8) && player_) cards.Open(25000);
       QuestSystem::Get().PollBlackSwan(dt_);
       crimeNet.TickHotTimer(dt_);
+      if (player_) {
+        if (auction.IsOpen()) auction.Update(*player_);
+        if (cards.Active()) cards.Update(dt_, *player_);
+      }
       if (state_ == AppState::Playing && player_) {
         police.Update(dt_, *player_, screenW_, screenH_, crimeNet, jail);
       }
@@ -409,6 +419,8 @@ void Application::Draw() {
       if (state_ == AppState::Playing) {
         police.Draw();
         crimeNet.DrawHUD(12.f, 58.f);
+        auction.Draw(screenW_, screenH_);
+        cards.Draw(screenW_, screenH_);
       }
       if (shop.IsOpen()) shop.Draw(screenW_, screenH_, *player_);
       if (travel.IsOpen() && world_) travel.Draw(screenW_, screenH_, *world_);
