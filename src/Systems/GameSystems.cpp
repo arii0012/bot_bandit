@@ -140,6 +140,7 @@ void GameSystems::OpenTravel() {
     p->SetEnergy(p->Energy() - 8);
     w->SetCity(list[i].id);
     p->SetCity(list[i].id);
+    w->SyncOwnedHouses(*p);
     p->AddExp(15);
     app_->UI()->Toast("Прибыл: " + list[i].name);
   });
