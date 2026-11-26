@@ -4,6 +4,7 @@
 #include "Minigames/StoryMinigames.hpp"
 #include "Systems/ReputationScales.hpp"
 #include <string>
+#include <cstdio>
 
 class StoryDirector {
 public:
@@ -19,13 +20,13 @@ public:
     act_ = 1;
     if (cuts) cuts->Play("ch1_cold_start");
     DialogueNode n;
-    n.speaker = "Seryy";
-    n.line = "Bez svyazey zdes' ne zhivut. Beresh' yashchik - ili idesh' peshkom.";
+    n.speaker = "Серый";
+    n.line = "Без связей здесь не выжить. Берёшь ящик — или идёшь пешком.";
     n.options = {
-      {"Zhestko: Ya ne gruzchik", DialogueTone::Hard, 5, -2, 0, "seryy", "disrespect", 1},
-      {"Spokoyno: Govori po delu", DialogueTone::Calm, 2, 0, 1, "seryy", "respect", 1},
-      {"Naglo: Skol'ko v dolyah?", DialogueTone::Bold, 4, -1, 0, "seryy", "greed", 1},
-      {"Molchat'", DialogueTone::Silent, 0, 0, -1, "seryy", "silent", 1},
+      {"Жёстко: Я не грузчик", DialogueTone::Hard, 5, -2, 0, "seryy", "disrespect", 1},
+      {"Спокойно: Говори по делу", DialogueTone::Calm, 2, 0, 1, "seryy", "respect", 1},
+      {"Нагло: Сколько в долях?", DialogueTone::Bold, 4, -1, 0, "seryy", "greed", 1},
+      {"Промолчать", DialogueTone::Silent, 0, 0, -1, "seryy", "silent", 1},
     };
     pendingDlg_ = n;
     hasPending_ = true;
