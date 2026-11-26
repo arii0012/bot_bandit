@@ -4,6 +4,7 @@
 #include "Graphics/ArtworkRenderer.hpp"
 #include "raymath.h"
 #include <cmath>
+#include <cstdlib>
 #include <cstdio>
 
 World::World() { EnsureCity(); }
