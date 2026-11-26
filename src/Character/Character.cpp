@@ -2,6 +2,7 @@
 #include "Character.hpp"
 #include "Core/FontUI.hpp"
 #include "Core/Config.hpp"
+#include "Graphics/ModelStore.hpp"
 #include <cmath>
 #include <algorithm>
 
@@ -19,7 +20,33 @@ Character::Character() {
 }
 
 void Character::Update(float dt) {
-  animTime_ += dt;
+  UpdateAnim(dt);
+}
+
+void Character::UpdateAnim(float dt) {
+  if (dt <= 0.f) return;
+  animTime_ += std::min(dt, 0.1f);
+}
+
+void Character::LoadMeshModel() {
+  if (meshLoadAttempted_) return;
+  meshLoadAttempted_ = true;
+  ModelStore& store = ModelStore::Get();
+  Model* candidate = store.GetCharacter(female_ ? "female" : "male");
+  if (candidate && candidate != &store.ProceduralChar() && candidate->meshCount > 0) {
+    mesh_ = *candidate; // ModelStore owns the GPU model.
+    meshLoaded_ = true;
+  } else {
+    mesh_ = {};
+    meshLoaded_ = false;
+  }
+}
+
+void Character::UnloadMeshModel() {
+  // Models are owned and released by ModelStore; this only clears the local handle.
+  mesh_ = {};
+  meshLoaded_ = false;
+  meshLoadAttempted_ = false;
 }
 
 static Color Shade(Color c, float k) {
@@ -196,42 +223,95 @@ void Character::Draw(float x, float y) {
 
 void Character::Draw3D(Vector3 pos, float scale) {
   LoadMeshModel();
-  float breathe = sinf(animTime_ * 2.2f) * 0.02f * scale;
-  Vector3 drawPos = {pos.x, pos.y + breathe, pos.z};
+  const float t = animTime_;
+  const float breathe = sinf(t * 2.1f) * 0.018f * scale;
+  const float stride = sinf(t * 6.2f) * 0.17f * scale;
+  const float turn = facingAngle_ * RAD2DEG;
+  const Vector3 drawPos{pos.x, pos.y + breathe, pos.z};
 
-  // contact shadow
-  DrawCylinder(Vector3{pos.x, 0.02f, pos.z}, 0.35f * scale, 0.45f * scale, 0.02f, 12, Fade(BLACK, 0.35f));
+  DrawCylinder(Vector3{pos.x, 0.02f, pos.z}, 0.38f * scale, 0.46f * scale,
+               0.025f * scale, 16, Fade(BLACK, 0.34f));
 
   if (meshLoaded_ && mesh_.meshCount > 0) {
-    float yawDeg = facingAngle_ * RAD2DEG;
-    float s = scale * (female_ ? 0.92f : 1.05f);
-    Color tint = colorTop_;
-    DrawModelEx(mesh_, drawPos, Vector3{0, 1, 0}, yawDeg, Vector3{s, s, s}, tint);
-  } else {
-    // procedural detailed mesh fallback (volume body, not flat rectangles)
-    Color skin = female_ ? Color{230, 180, 160, 255} : Color{210, 168, 140, 255};
-    // legs
-    DrawCube(Vector3{pos.x - 0.12f * scale, 0.45f * scale, pos.z}, 0.16f * scale, 0.9f * scale, 0.16f * scale, colorPants_);
-    DrawCube(Vector3{pos.x + 0.12f * scale, 0.45f * scale, pos.z}, 0.16f * scale, 0.9f * scale, 0.16f * scale, colorPants_);
-    // shoes
-    DrawCube(Vector3{pos.x - 0.12f * scale, 0.06f * scale, pos.z + 0.04f * scale}, 0.18f * scale, 0.1f * scale, 0.28f * scale, colorShoes_);
-    DrawCube(Vector3{pos.x + 0.12f * scale, 0.06f * scale, pos.z + 0.04f * scale}, 0.18f * scale, 0.1f * scale, 0.28f * scale, colorShoes_);
-    // torso
-    float tw = female_ ? 0.38f : 0.48f;
-    DrawCube(Vector3{pos.x, 1.15f * scale, pos.z}, tw * scale, 0.7f * scale, 0.28f * scale, colorTop_);
-    // head
-    DrawSphere(Vector3{pos.x, 1.65f * scale, pos.z}, 0.22f * scale, skin);
-    // hair
-    DrawSphere(Vector3{pos.x, 1.78f * scale, pos.z}, 0.23f * scale, hairColor_);
-    // eyes
-    float side = cosf(facingAngle_);
-    DrawSphere(Vector3{pos.x - 0.07f * scale * side, 1.68f * scale, pos.z + 0.18f * scale}, 0.035f * scale, colorEyes_);
-    DrawSphere(Vector3{pos.x + 0.07f * scale * side, 1.68f * scale, pos.z + 0.18f * scale}, 0.035f * scale, colorEyes_);
-    // arms
-    float armSwing = sinf(animTime_ * 6.f) * 0.25f;
-    DrawCube(Vector3{pos.x - 0.32f * scale, 1.1f * scale + armSwing * 0.05f, pos.z}, 0.12f * scale, 0.55f * scale, 0.12f * scale, skin);
-    DrawCube(Vector3{pos.x + 0.32f * scale, 1.1f * scale - armSwing * 0.05f, pos.z}, 0.12f * scale, 0.55f * scale, 0.12f * scale, skin);
-    // rim light proxy - bright outline spheres low alpha
-    DrawSphereWires(Vector3{pos.x, 1.2f * scale, pos.z}, 0.55f * scale, 8, 8, Fade(Color{0, 210, 255, 255}, 0.15f));
+    const float modelScale = scale * (female_ ? 0.92f : 1.05f);
+    DrawModelEx(mesh_, drawPos, Vector3{0.f, 1.f, 0.f}, turn,
+                Vector3{modelScale, modelScale, modelScale}, colorTop_);
+    return;
   }
+
+  const Color skin = female_ ? Color{230, 180, 160, 255} : Color{210, 168, 140, 255};
+  const Color skinShadow = Fade(Color{75, 48, 42, 255}, 0.28f);
+  const float hipY = 0.92f * scale;
+  const float kneeY = 0.48f * scale;
+  const float ankleY = 0.13f * scale;
+  const float legX = 0.13f * scale;
+
+  // Animated legs: upper and lower segments follow opposite phases.
+  for (int side : {-1, 1}) {
+    const float phase = side < 0 ? stride : -stride;
+    const float hipZ = pos.z;
+    const float kneeZ = pos.z + phase;
+    const Vector3 hip{pos.x + side * legX, hipY, hipZ};
+    const Vector3 knee{pos.x + side * legX, kneeY, kneeZ};
+    const Vector3 ankle{pos.x + side * legX, ankleY, pos.z + phase * 0.45f};
+    DrawCylinderEx(hip, knee, 0.105f * scale, 0.078f * scale, 10, colorPants_);
+    DrawCylinderEx(knee, ankle, 0.078f * scale, 0.06f * scale, 10, colorPants_);
+    DrawCube(Vector3{ankle.x, ankle.y - 0.035f * scale, ankle.z + 0.10f * scale},
+             0.19f * scale, 0.10f * scale, 0.30f * scale, colorShoes_);
+  }
+
+  // Torso and neck.
+  const float torsoY = 1.24f * scale + breathe;
+  const float torsoW = (female_ ? 0.40f : 0.48f) * scale;
+  DrawCube(Vector3{pos.x, torsoY, pos.z}, torsoW, 0.72f * scale,
+           0.30f * scale, colorTop_);
+  DrawCube(Vector3{pos.x, 0.91f * scale, pos.z}, 0.34f * scale,
+           0.16f * scale, 0.28f * scale, colorPants_);
+  DrawCylinder(Vector3{pos.x, 1.66f * scale, pos.z}, 0.09f * scale,
+               0.09f * scale, 0.18f * scale, 10, skin);
+
+  // Arms swing opposite to the legs.
+  for (int side : {-1, 1}) {
+    const float armPhase = side < 0 ? -stride : stride;
+    const Vector3 shoulder{pos.x + side * 0.30f * scale, 1.48f * scale + breathe, pos.z};
+    const Vector3 elbow{pos.x + side * 0.37f * scale, 1.12f * scale, pos.z + armPhase * 0.45f};
+    const Vector3 hand{pos.x + side * 0.34f * scale, 0.88f * scale, pos.z + armPhase};
+    DrawCylinderEx(shoulder, elbow, 0.095f * scale, 0.075f * scale, 10, colorTop_);
+    DrawCylinderEx(elbow, hand, 0.075f * scale, 0.055f * scale, 10, skin);
+    DrawSphere(hand, 0.07f * scale, skin);
+  }
+
+  // Head, hair, eyes and small facial details.
+  const Vector3 head{pos.x, 1.91f * scale + breathe, pos.z};
+  DrawSphere(head, 0.235f * scale, skin);
+  DrawSphere(Vector3{head.x, head.y + 0.12f * scale, head.z - 0.015f * scale},
+             0.22f * scale, hairColor_);
+  if (hairStyle_ % 4 == 1) {
+    DrawSphere(Vector3{head.x - 0.16f * scale, head.y - 0.04f * scale, head.z},
+               0.12f * scale, hairColor_);
+    DrawSphere(Vector3{head.x + 0.16f * scale, head.y - 0.04f * scale, head.z},
+               0.12f * scale, hairColor_);
+  } else if (hairStyle_ % 4 == 2 || female_) {
+    DrawSphere(Vector3{head.x - 0.17f * scale, head.y - 0.16f * scale, head.z},
+               0.11f * scale, hairColor_);
+    DrawSphere(Vector3{head.x + 0.17f * scale, head.y - 0.16f * scale, head.z},
+               0.11f * scale, hairColor_);
+  }
+  const float blink = (sinf(t * 1.7f) > 0.965f) ? 0.012f : 0.045f;
+  for (int side : {-1, 1}) {
+    DrawSphere(Vector3{head.x + side * 0.078f * scale, head.y - 0.015f * scale,
+                       head.z + 0.205f * scale},
+               blink * scale, colorEyes_);
+  }
+  DrawSphereWires(Vector3{pos.x, 1.25f * scale, pos.z}, 0.56f * scale,
+                  10, 10, Fade(Color{0, 210, 255, 255}, 0.12f));
+  if (dirt_ > 0.05f) {
+    DrawSphere(Vector3{pos.x + 0.18f * scale, 1.0f * scale, pos.z + 0.16f * scale},
+               0.08f * dirt_ * scale, Color{75, 55, 35, 180});
+  }
+  if (wet_ > 0.05f) {
+    DrawSphereWires(head, 0.245f * scale, 8, 8,
+                    Fade(Color{120, 170, 230, 255}, wet_ * 0.35f));
+  }
+  (void)skinShadow;
 }
