@@ -113,3 +113,57 @@ void Garage::Draw(int sw, int sh, Character& p) {
   FontUI::Get().Draw((std::string("Vybrano: ") + cur).c_str(), 40, sh - 70.f, 18, Color{244, 196, 48, 255});
   FontUI::Get().Draw("A/D - vybor  ESC - nazad", 40, sh - 42.f, 14, Color{140, 140, 160, 255});
 }
+
+
+const std::vector<GarageCarDef>& Garage::Catalog() {
+  static const std::vector<GarageCarDef> k = {
+    {"vaz2107", "VAZ 2107", 280000},
+    {"priora", "Lada Priora", 550000},
+    {"granta", "Lada Granta", 720000},
+    {"vesta", "Lada Vesta", 1100000},
+    {"bmw3", "BMW 3", 4500000},
+    {"camry", "Toyota Camry", 3200000},
+    {"lambo", "Lamborghini", 25000000},
+  };
+  return k;
+}
+
+bool Garage::Buy(Character& p, const std::string& id, std::string& msg) {
+  for (auto& c : Catalog()) {
+    if (c.id != id) continue;
+    for (auto& owned : p.Inv().cars)
+      if (owned == id) { msg = "Uzhe est'"; return false; }
+    if (p.Money() < c.price) {
+      msg = "Nuzhno " + std::to_string(c.price) + " rub.";
+      return false;
+    }
+    p.AddMoney(-c.price);
+    p.Inv().cars.push_back(id);
+    p.SetActiveCar(id);
+    msg = "Kupil " + c.name;
+    return true;
+  }
+  msg = "Net v kataloge";
+  return false;
+}
+
+bool Garage::Tune(Character& p, const std::string& kind, std::string& msg) {
+  if (p.Inv().cars.empty()) { msg = "Net mashiny"; return false; }
+  int cost = 50000;
+  if (kind == "engine") cost = 80000;
+  else if (kind == "turbo") cost = 120000;
+  else if (kind == "neon") cost = 45000;
+  else if (kind == "paint") cost = 25000;
+  if (p.Money() < cost) { msg = "Malo deneg"; return false; }
+  p.AddMoney(-cost);
+  if (kind == "engine") p.engineLvl_++;
+  else if (kind == "turbo") p.turboLvl_++;
+  else if (kind == "neon") p.neonCar_ = true;
+  else if (kind == "paint") {
+    p.carR_ = (unsigned char)GetRandomValue(40, 255);
+    p.carG_ = (unsigned char)GetRandomValue(40, 255);
+    p.carB_ = (unsigned char)GetRandomValue(40, 255);
+  }
+  msg = "Tyuning: " + kind;
+  return true;
+}
