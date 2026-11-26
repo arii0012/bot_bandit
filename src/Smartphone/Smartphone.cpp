@@ -132,7 +132,7 @@ void Smartphone::DrawДаркнет(Rectangle c) {
     if (AppButton({c.x + 16, c.y + 150, c.width - 32, 40}, "Автомат 185к", Config::ColDanger())) {
       if (p->Money() >= 185000) {
         p->AddMoney(-185000);
-        p->Inv().weapons.push_back("Автомат");
+        p->Inv().weapons.push_back("SMG");
         SetStatus("Автомат куплен");
       } else SetStatus("Нужно 185000");
     }
