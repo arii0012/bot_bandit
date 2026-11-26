@@ -16,11 +16,11 @@ BEGIN
     BLOCK "040904B0"
     BEGIN
       VALUE "CompanyName",      "BotBandit Project"
-      VALUE "FileDescription",  "3D Life Simulator Game"
+      VALUE "FileDescription",  "BotBandit 3D Game and Installer"
       VALUE "FileVersion",      "1.0.0.0"
-      VALUE "InternalName",     "botbandit"
+      VALUE "InternalName",     "BotBandit_Setup"
       VALUE "LegalCopyright",   "Copyright (C) 2026 BotBandit Project"
-      VALUE "OriginalFilename", "botbandit.exe"
+      VALUE "OriginalFilename", "BotBandit_Setup.exe"
       VALUE "ProductName",      "BotBandit 3D"
       VALUE "ProductVersion",   "1.0.0.0"
     END

@@ -13,6 +13,8 @@ env:
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -30,32 +32,40 @@ jobs:
       - name: Build
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
 
-      - name: Stage
+      - name: Stage game zip and setup
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path stage | Out-Null
           $exe = Get-ChildItem build -Recurse -Filter botbandit.exe | Select-Object -First 1
           if (-not $exe) { throw "botbandit.exe missing" }
           Copy-Item $exe.FullName stage/botbandit.exe
-          $setup = Get-ChildItem build -Recurse -Filter LifeSim3D_Setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($setup) { Copy-Item $setup.FullName stage/LifeSim3D_Setup.exe }
           if (Test-Path assets) { Copy-Item -Recurse assets stage/ }
           if (Test-Path shaders) { Copy-Item -Recurse shaders stage/ }
           if (Test-Path data) { Copy-Item -Recurse data stage/ } else { New-Item -ItemType Directory -Force -Path stage/data | Out-Null }
           Compress-Archive -Path stage/* -DestinationPath BotBandit-Windows-x64.zip -Force
-          Get-FileHash BotBandit-Windows-x64.zip -Algorithm SHA256 |
-            ForEach-Object { "$($_.Hash.ToLower())  BotBandit-Windows-x64.zip" } |
-            Out-File -Encoding ascii SHA256SUMS.txt
+
+          $setup = Get-ChildItem build -Recurse -Filter BotBandit_Setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $setup) { $setup = Get-ChildItem build -Recurse -Filter LifeSim3D_Setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1 }
+          if ($setup) { Copy-Item $setup.FullName BotBandit_Setup.exe }
+
+          @(
+            "$((Get-FileHash BotBandit-Windows-x64.zip -Algorithm SHA256).Hash.ToLower())  BotBandit-Windows-x64.zip"
+          ) | Out-File -Encoding ascii SHA256SUMS.txt
+          if (Test-Path BotBandit_Setup.exe) {
+            Add-Content -Encoding ascii SHA256SUMS.txt "$((Get-FileHash BotBandit_Setup.exe -Algorithm SHA256).Hash.ToLower())  BotBandit_Setup.exe"
+          }
 
       - uses: actions/upload-artifact@v4
         with:
           name: BotBandit-Windows-x64
           path: |
             BotBandit-Windows-x64.zip
+            BotBandit_Setup.exe
             SHA256SUMS.txt
           retention-days: 14
+          if-no-files-found: warn
 
-      - name: Release
+      - name: GitHub Release
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
@@ -63,8 +73,10 @@ jobs:
           name: BotBandit ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || format('build-{0}', github.run_number) }}
           files: |
             BotBandit-Windows-x64.zip
+            BotBandit_Setup.exe
             SHA256SUMS.txt
           generate_release_notes: true
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,39 +84,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Deps
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake ninja-build python3 \
             libasound2-dev libx11-dev libxrandr-dev libxi-dev \
             libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev
-
-      - name: Prepare character textures
-        continue-on-error: true
-        run: |
-          pip3 install Pillow || true
-          python3 tools/prepare_character_assets.py || true
-
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -G Ninja
-
       - name: Build
         run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
-
-      - name: Package
-        run: |
-          mkdir -p stage
-          cp build/botbandit stage/ 2>/dev/null || find build -name botbandit -type f -exec cp {} stage/ \;
-          cp -r assets shaders stage/ 2>/dev/null || true
-          mkdir -p stage/data
-          tar -czf BotBandit-Linux-x64.tar.gz -C stage .
-          sha256sum BotBandit-Linux-x64.tar.gz > SHA256SUMS-linux.txt
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: BotBandit-Linux-x64
-          path: |
-            BotBandit-Linux-x64.tar.gz
-            SHA256SUMS-linux.txt
-          retention-days: 14
