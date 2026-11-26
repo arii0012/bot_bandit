@@ -6,81 +6,81 @@
 void CutsceneSystem::EnsureChapters() {
   if (!chapters_.empty()) return;
   chapters_ = {
-    {"ch1_cold_start", "Glava 1: Holodnyy start", 10.f, {
-      {0.f, 3.f, "Noch. Pereulok. Ty priehal bez svyazey."},
-      {3.f, 6.f, "Pere kupshchik u fonarya: 'Rabota est'. Za nal."},
-      {6.f, 10.f, "Pervaya podrabotka - stroika ili dostavka."},
-    }, {}, "Zarabotay 50 000 P i kupi edy/odezhdu"},
+    {"ch1_cold_start", "Глава 1: Холодный старт", 10.f, {
+      {0.f, 3.f, "Ночь. Переулок. Ты приехал без связей."},
+      {3.f, 6.f, "Перекупщик у фонаря: «Работа есть. За наличные»."},
+      {6.f, 10.f, "Первая подработка — стройка или доставка."},
+    }, {}, "Заработай 50 000 ₽ и купи еду или одежду"},
 
-    {"ch2_first_wheels", "Glava 2: Pervye kolesa", 9.f, {
-      {0.f, 3.f, "Hvatilo na VAZ. Klyuchi kholodnye."},
-      {3.f, 6.f, "Nochnoy zaezd. Signaly. Smeh stritreyserov."},
-      {6.f, 9.f, "Teper' u tebya est' kolesa - i dolgi po benzu."},
-    }, {}, "Kupi pervoe avto i proedi nochnoy marshrut"},
+    {"ch2_first_wheels", "Глава 2: Первые колёса", 9.f, {
+      {0.f, 3.f, "Хватило на ВАЗ. Ключи холодные."},
+      {3.f, 6.f, "Ночной заезд. Сигналы. Смех стритрейсеров."},
+      {6.f, 9.f, "Теперь у тебя есть колёса — и долги за бензин."},
+    }, {}, "Купи первое авто и проедь ночной маршрут"},
 
-    {"ch3_own_corner", "Glava 3: Svoy ugol", 9.f, {
-      {0.f, 3.f, "Klyuchi ot odnushki. Zapah kraski."},
-      {3.f, 6.f, "Nochnaya oblava. Sireny. Nado uhodit'."},
-      {6.f, 9.f, "Pervyy opyt pogoni - i pervyy urok."},
-    }, {}, "Kupi zhile i ube ri ot politsii"},
+    {"ch3_own_corner", "Глава 3: Свой угол", 9.f, {
+      {0.f, 3.f, "Ключи от однушки. Запах краски."},
+      {3.f, 6.f, "Ночная облава. Сирены. Нужно уходить."},
+      {6.f, 9.f, "Первый опыт погони — и первый урок."},
+    }, {}, "Купи жильё и уйди от полиции"},
 
-    {"ch4_dark_deals", "Glava 4: Temnye dela", 9.f, {
-      {0.f, 3.f, "Baryga v podvale: 'Gruz mezhdu gorodami'."},
-      {3.f, 6.f, "Risk - konfiskat. Nagrada - zhirnyy nal."},
-      {6.f, 9.f, "Vybor: vezti ili slivat' mentam."},
+    {"ch4_dark_deals", "Глава 4: Тёмные дела", 9.f, {
+      {0.f, 3.f, "Дельцы в подвале: «Груз между городами»."},
+      {3.f, 6.f, "Риск — конфискация. Награда — крупные деньги."},
+      {6.f, 9.f, "Выбор: везти или сообщить полиции."},
     }, {
-      {"Vezti gruz", 4},
-      {"Otkazatsya", 4},
-    }, "Vypolni kontr bundu ili otkazhis'"},
+      {"Везти груз", 4},
+      {"Отказаться", 4},
+    }, "Выполни контрабандное поручение или откажись"},
 
-    {"ch5_big_stakes", "Glava 5: Bol'shie stavki", 10.f, {
-      {0.f, 3.f, "VIP-kazino. Avtoritet stavit vse."},
-      {3.f, 6.f, "Sharik katitsya. Zal molchit."},
-      {6.f, 10.f, "Sdat' ego politsii ili voyti v dolyu?"},
+    {"ch5_big_stakes", "Глава 5: Большие ставки", 10.f, {
+      {0.f, 3.f, "VIP-казино. Авторитет ставит всё."},
+      {3.f, 6.f, "Шарик катится. Зал молчит."},
+      {6.f, 10.f, "Сдать его полиции или войти в долю?"},
     }, {
-      {"Sdat' politsii", 5},
-      {"Voyti v dolyu", 5},
-    }, "Sygray v kazino protiv avtoriteta"},
+      {"Сдать полиции", 5},
+      {"Войти в долю", 5},
+    }, "Сыграй в казино против авторитета"},
 
-    {"ch6_business", "Glava 6: Delovaya hvatka", 9.f, {
-      {0.f, 3.f, "Pervaya tocka. Vitrina. Kassovyy apparat."},
-      {3.f, 6.f, "Reketyory prosyat 'kryshu'."},
-      {6.f, 9.f, "Platit' - ili bit'."},
+    {"ch6_business", "Глава 6: Деловая хватка", 9.f, {
+      {0.f, 3.f, "Первая точка. Витрина. Кассовый аппарат."},
+      {3.f, 6.f, "Вымогатели требуют «крышу»."},
+      {6.f, 9.f, "Платить или дать отпор."},
     }, {
-      {"Zaplatit' reketu", 6},
-      {"Dat' otpor", 6},
-    }, "Kupi biznes i zashchiti tocku"},
+      {"Заплатить вымогателям", 6},
+      {"Дать отпор", 6},
+    }, "Купи бизнес и защити точку"},
 
-    {"ch7_setup", "Glava 7: Podstava", 10.f, {
-      {0.f, 3.f, "Naruchniki. Lozhnoe obvinenie."},
-      {3.f, 6.f, "Kamera KPZ. Timer na stene."},
-      {6.f, 10.f, "Advokat, vzyatka ili pobeg."},
+    {"ch7_setup", "Глава 7: Подстава", 10.f, {
+      {0.f, 3.f, "Наручники. Ложное обвинение."},
+      {3.f, 6.f, "Камера СИЗО. Таймер на стене."},
+      {6.f, 10.f, "Адвокат, взятка или побег."},
     }, {
-      {"Podkup sud'i", 7},
-      {"Pobeg", 7},
-    }, "Vyyd i iz KPZ lyubym sposobom"},
+      {"Подкупить судью", 7},
+      {"Побег", 7},
+    }, "Выйди из СИЗО любым способом"},
 
-    {"ch8_capital", "Glava 8: Stolichnye ambitsii", 9.f, {
-      {0.f, 3.f, "Moskva / Sochi. Drugoy masshtab."},
-      {3.f, 6.f, "Auktsion redkih avto. Elita smotrit."},
-      {6.f, 9.f, "Zdes' imya vesit bol'she nalichki."},
-    }, {}, "Pereezzhay v stolitsu i zaydi na aukt sion"},
+    {"ch8_capital", "Глава 8: Столичные амбиции", 9.f, {
+      {0.f, 3.f, "Москва или Сочи. Другой масштаб."},
+      {3.f, 6.f, "Аукцион редких автомобилей. Элитная публика."},
+      {6.f, 9.f, "Здесь имя весит больше наличных."},
+    }, {}, "Переезжай в столицу и загляни на аукцион"},
 
-    {"ch9_war", "Glava 9: Voyna sindikatov", 10.f, {
-      {0.f, 3.f, "Rayony na karte - krasnye i chernye."},
-      {3.f, 6.f, "Tochka za tockoy. Krov' za krov'."},
-      {6.f, 10.f, "Reshayushchaya razborka."},
-    }, {}, "Zachvati klyuchevye rayony"},
+    {"ch9_war", "Глава 9: Война синдикатов", 10.f, {
+      {0.f, 3.f, "Районы на карте — красные и чёрные."},
+      {3.f, 6.f, "Точка за точкой. Борьба за влияние."},
+      {6.f, 10.f, "Решающее противостояние."},
+    }, {}, "Получи контроль над ключевыми районами"},
 
-    {"ch10_empire", "Glava 10: Imperiya", 12.f, {
-      {0.f, 4.f, "Penthouse. Tishina. Vid na gorod."},
-      {4.f, 8.f, "Legal'nyy magnat. Korol' ulits. Kriminal'nyy boss."},
-      {8.f, 12.f, "Istoriya ne konchaetsya - ona uskor yaetsya."},
+    {"ch10_empire", "Глава 10: Империя", 12.f, {
+      {0.f, 4.f, "Пентхаус. Тишина. Вид на город."},
+      {4.f, 8.f, "Законный магнат. Король улиц. Криминальный босс."},
+      {8.f, 12.f, "История не заканчивается — она ускоряется."},
     }, {
-      {"Final: Magnat", -1},
-      {"Final: Korol' ulits", -1},
-      {"Final: Boss", -1},
-    }, "Kupi elitnoe zhile i vyberi final"},
+      {"Финал: Магнат", -1},
+      {"Финал: Король улиц", -1},
+      {"Финал: Босс", -1},
+    }, "Купи элитное жильё и выбери финал"},
   };
 }
 
@@ -132,11 +132,13 @@ void CutsceneSystem::SelectChoice(int idx) {
   if (idx < 0 || idx >= (int)ch.choices.size()) return;
   pendingChoice_ = false;
   active_ = false;
-  int next = ch.choices[idx].nextChapter;
-  if (next >= 0 && next < (int)chapters_.size()) {
-    // stay on same index progression - caller may advance
+  const int next = ch.choices[idx].nextChapter;
+  if (next >= 0 && next < static_cast<int>(chapters_.size())) {
+    PlayChapter(next);
+  } else {
+    active_ = false;
+    t_ = 0.f;
   }
-  (void)next;
 }
 
 void CutsceneSystem::Update(float dt) {
@@ -188,14 +190,14 @@ void CutsceneSystem::Draw(int sw, int sh) {
   float p = duration_ > 0.f ? t_ / duration_ : 1.f;
   if (p > 1.f) p = 1.f;
   DrawRectangle(0, sh - 4, static_cast<int>(sw * p), 4, Color{230, 57, 70, 200});
-  FontUI::Get().Draw("SPACE - dalee   ESC - skip", 24, static_cast<float>(sh - bar + 8), 14,
+  FontUI::Get().Draw("ПРОБЕЛ — далее   ESC — пропустить", 24, static_cast<float>(sh - bar + 8), 14,
                      Color{140, 140, 160, 255});
 
   if (pendingChoice_ && chapterIndex_ >= 0) {
     auto& ch = chapters_[chapterIndex_];
     float bx = sw * 0.5f - 160.f;
     float by = sh * 0.5f - ch.choices.size() * 30.f;
-    FontUI::Get().DrawCentered("VYBOR", sw * 0.5f, by - 40.f, 24, Color{244, 196, 48, 255});
+    FontUI::Get().DrawCentered("ВЫБОР", sw * 0.5f, by - 40.f, 24, Color{244, 196, 48, 255});
     for (int i = 0; i < (int)ch.choices.size(); ++i) {
       Rectangle r{bx, by + i * 56.f, 320.f, 48.f};
       bool h = CheckCollisionPointRec(GetMousePosition(), r);
