@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <random>
+#include <cstdint>
 
 World::World() { EnsureCity(); }
 
