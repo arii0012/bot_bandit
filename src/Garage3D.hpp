@@ -39,17 +39,17 @@ public:
     if (IsKeyPressed(KEY_E)) sel_ = (sel_ + 1) % n;
     if (IsKeyPressed(KEY_ONE)) {
       p.neonCar_ = true;
-      toast_ = "Neon ON";
+      toast_ = "Неон включён";
     }
     if (IsKeyPressed(KEY_TWO)) {
       p.carR_ = (unsigned char)GetRandomValue(20, 255);
       p.carG_ = (unsigned char)GetRandomValue(20, 255);
       p.carB_ = (unsigned char)GetRandomValue(20, 255);
-      toast_ = "Paint";
+      toast_ = "Покраска";
     }
     if (IsKeyPressed(KEY_THREE)) {
       p.engineLvl_ = std::min(5, p.engineLvl_ + 1);
-      toast_ = "Chip +";
+      toast_ = "Тюнинг +";
     }
     if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_G)) Close();
     wheel_ += dt * 90.f;
@@ -81,12 +81,12 @@ public:
     DrawRectangleRounded(panel, 0.08f, 10, Color{16, 16, 26, 230});
     DrawRectangleRoundedLines(panel, 0.08f, 10, Color{220, 40, 70, 180});
 
-    std::string car = cars_.empty() ? "EMPTY - buy car in shop" : cars_[sel_ % cars_.size()];
+    std::string car = cars_.empty() ? "Нет машины — купи её в магазине" : cars_[sel_ % cars_.size()];
     FontUI::Get().Draw(car.c_str(), panel.x + 24, panel.y + 14, 22, WHITE);
 
     char stats[128];
-    snprintf(stats, sizeof(stats), "Engine L%d  Turbo L%d  Neon %s", p.engineLvl_, p.turboLvl_,
-             p.neonCar_ ? "ON" : "OFF");
+    snprintf(stats, sizeof(stats), "Двигатель ур. %d  Турбо ур. %d  Неон %s", p.engineLvl_, p.turboLvl_,
+             p.neonCar_ ? "ВКЛ" : "ВЫКЛ");
     FontUI::Get().Draw(stats, panel.x + 24, panel.y + 42, 16, Color{160, 160, 180, 255});
 
     auto btn = [&](float bx, const char* lab, float bw) -> bool {
@@ -100,24 +100,24 @@ public:
 
     int n = (int)cars_.size();
     if (n < 1) n = 1;
-    if (btn(20.f, "< PREV", 100.f)) sel_ = (sel_ + n - 1) % n;
-    if (btn(130.f, "NEXT >", 100.f)) sel_ = (sel_ + 1) % n;
-    if (btn(250.f, "NEON", 90.f)) {
+    if (btn(20.f, "< ПРЕД.", 100.f)) sel_ = (sel_ + n - 1) % n;
+    if (btn(130.f, "СЛЕД. >", 100.f)) sel_ = (sel_ + 1) % n;
+    if (btn(250.f, "НЕОН", 90.f)) {
       p.neonCar_ = !p.neonCar_;
-      toast_ = p.neonCar_ ? "Neon ON" : "Neon OFF";
+      toast_ = p.neonCar_ ? "Неон включён" : "Неон выключен";
     }
-    if (btn(350.f, "PAINT", 90.f)) {
+    if (btn(350.f, "ЦВЕТ", 90.f)) {
       p.carR_ = (unsigned char)GetRandomValue(20, 255);
       p.carG_ = (unsigned char)GetRandomValue(20, 255);
       p.carB_ = (unsigned char)GetRandomValue(20, 255);
-      toast_ = "Paint";
+      toast_ = "Покраска";
     }
-    if (btn(450.f, "CHIP", 90.f)) {
+    if (btn(450.f, "ТЮНИНГ", 90.f)) {
       p.engineLvl_ = std::min(5, p.engineLvl_ + 1);
-      toast_ = "Chip +";
+      toast_ = "Тюнинг +";
     }
-    if (btn(550.f, "DRIVE", 100.f)) open_ = false;
-    if (btn(panel.width - 140.f, "BACK", 110.f)) open_ = false;
+    if (btn(550.f, "ВЫЕХАТЬ", 100.f)) open_ = false;
+    if (btn(panel.width - 140.f, "ЗАКРЫТЬ", 110.f)) open_ = false;
 
     if (!toast_.empty())
       FontUI::Get().Draw(toast_.c_str(), panel.x + 24, panel.y - 28, 18, Color{0, 220, 255, 255});
