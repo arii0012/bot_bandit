@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 project(BotBanditUnderworld VERSION 1.3.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -14,7 +14,7 @@ endif()
 if(MSVC)
   add_compile_options(/utf-8 /Zc:char8_t-)
 else()
-  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8 -fno-char8_t)
+  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
 endif()
 
 include(FetchContent)
@@ -77,9 +77,10 @@ set(GAME_SOURCES
   src/Minigames/DJ.cpp
 )
 
-add_executable(botbandit ${GAME_SOURCES})
+add_executable(botbandit WIN32 ${GAME_SOURCES})
 if(WIN32 AND MSVC)
   target_sources(botbandit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc)
+  target_link_options(botbandit PRIVATE /ENTRY:mainCRTStartup)
 endif()
 
 target_include_directories(botbandit PRIVATE
@@ -122,16 +123,18 @@ add_custom_command(TARGET botbandit POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:botbandit>/data
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:botbandit>/assets
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:botbandit>/shaders
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/data $<TARGET_FILE_DIR:botbandit>/data
   COMMENT "Copy assets and shaders"
 )
 
 if(WIN32)
-  add_executable(LifeSim3D_Setup
+  add_executable(LifeSim3D_Setup WIN32
     installer/setup_main.cpp
     installer/win_admin.cpp
   )
   if(MSVC)
     target_sources(LifeSim3D_Setup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/resources/app.rc)
+    target_link_options(LifeSim3D_Setup PRIVATE /ENTRY:mainCRTStartup)
   endif()
   target_include_directories(LifeSim3D_Setup PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
