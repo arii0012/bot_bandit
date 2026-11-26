@@ -1,5 +1,5 @@
-#include "raymath.h"
 #include "Character.hpp"
+#include "raymath.h"
 #include "Core/FontUI.hpp"
 #include "Core/Config.hpp"
 #include "Graphics/ModelStore.hpp"
