@@ -27,7 +27,10 @@ public:
           "  \"jail_seconds_per_star\": 30\n"
           "}\n";
       MakeDirectory("data");
-      SaveFileText(path.c_str(), def);
+      {
+        std::ofstream out(path, std::ios::binary);
+        if (out) out << def;
+      }
     }
     Reload();
   }

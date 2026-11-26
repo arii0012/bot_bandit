@@ -45,4 +45,5 @@ private:
   Color skyTop_{};
   Color skyBot_{};
   float lastSkyT_ = -1.f;
+  bool raining_ = false;
 };

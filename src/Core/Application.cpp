@@ -56,6 +56,9 @@
 #include <algorithm>
 #include <cmath>
 
+
+static ArrestAndJailSystem g_jail;
+
 Application::Application() {
   InitWindowBorderless();
   SetTargetFPS(60);
@@ -152,7 +155,7 @@ void Application::Run() {
     if (dt_ < 0.f) dt_ = 0.f;
     static ProfilerOverlay prof;
     static ReplaySystem replay;
-    static ArrestAndJailSystem jail;
+    // jail -> g_jail
     static MinigamesSuite minis;
     prof.BeginFrame();
     if (IsKeyPressed(KEY_F3)) prof.Toggle();
@@ -164,23 +167,23 @@ void Application::Run() {
       if (player_ && player_->Wanted() >= 3) AudioEngine::Get().SetMood(MusicMood::Chase);
       else AudioEngine::Get().SetMood(MusicMood::City);
     }
-    if (player_ && state_ == AppState::Playing && !jail.Jailed()) {
+    if (player_ && state_ == AppState::Playing && !g_jail.Jailed()) {
       float px = (float)screenW_ * 0.5f, py = (float)screenH_ * 0.55f;
       replay.Push(px, py, player_->Facing(), 0.f, player_->Wanted(), GetTime());
       // auto-arrest on high wanted
       if (player_->Wanted() >= 5 && GetRandomValue(0, 1000) < 3) {
-        jail.Arrest(*player_, CrimeArticle::ResistArrest,
+        g_jail.Arrest(*player_, CrimeArticle::ResistArrest,
                     static_cast<float>(HotReloadConfig::Get().JailPerStar() * player_->Wanted()));
       }
     }
-    if (jail.Jailed() && player_) jail.Update(dt_, *player_);
+    if (g_jail.Jailed() && player_) g_jail.Update(dt_, *player_);
     minis.Update(dt_);
     replay.Update(dt_);
     Update();
     BeginDrawing();
     ClearBackground(Color{8, 8, 14, 255});
     Draw();
-    if (jail.Jailed()) jail.Draw(screenW_, screenH_);
+    if (g_jail.Jailed()) g_jail.Draw(screenW_, screenH_);
     if (minis.Active()) minis.Draw(screenW_, screenH_);
     replay.Draw(screenW_, screenH_);
     prof.EndFrame();
@@ -377,7 +380,7 @@ void Application::Draw() {
         if (cards.Active()) cards.Update(dt_, *player_);
       }
       if (state_ == AppState::Playing && player_) {
-        police.Update(dt_, *player_, screenW_, screenH_, crimeNet, jail);
+        police.Update(dt_, *player_, screenW_, screenH_, crimeNet, g_jail);
       }
       QuestSystem::Get().ApplyPendingReward(*player_);
     }
