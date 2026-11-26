@@ -3,8 +3,8 @@
 1 RT_MANIFEST "app.manifest"
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     1,0,0,0
-PRODUCTVERSION  1,0,0,0
+FILEVERSION     1,3,0,0
+PRODUCTVERSION  1,3,0,0
 FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
 FILEFLAGS       0
 FILEOS          VOS_NT_WINDOWS32
@@ -13,20 +13,20 @@ FILESUBTYPE     VFT2_UNKNOWN
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
-    BLOCK "040904B0"
+    BLOCK "041904B0"
     BEGIN
       VALUE "CompanyName",      "BotBandit Project"
       VALUE "FileDescription",  "BotBandit 3D Game and Installer"
-      VALUE "FileVersion",      "1.0.0.0"
+      VALUE "FileVersion",      "1.3.0.0"
       VALUE "InternalName",     "BotBandit_Setup"
       VALUE "LegalCopyright",   "Copyright (C) 2026 BotBandit Project"
       VALUE "OriginalFilename", "BotBandit_Setup.exe"
       VALUE "ProductName",      "BotBandit 3D"
-      VALUE "ProductVersion",   "1.0.0.0"
+      VALUE "ProductVersion",   "1.3.0.0"
     END
   END
   BLOCK "VarFileInfo"
   BEGIN
-    VALUE "Translation", 0x0409, 1200
+    VALUE "Translation", 0x0419, 1200
   END
 END
