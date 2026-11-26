@@ -10,8 +10,8 @@ os.makedirs(OUT, exist_ok=True)
 
 try:
     from PIL import Image, ImageFilter, ImageEnhance
-except ImportError:
-    Image = None
+except ImportError as exc:
+    raise SystemExit("Pillow is required: python -m pip install Pillow") from exc
 
 def enhance_to_png(src, dst, scale=2):
     im = Image.open(src)
@@ -26,22 +26,6 @@ def enhance_to_png(src, dst, scale=2):
     im.save(dst, "PNG", optimize=True)
     print("wrote", dst)
 
-def placeholders():
-    if Image is None:
-        for name in ["face", "torso", "arm", "leg", "neck", "face_alt"]:
-            open(os.path.join(OUT, name + ".png"), "wb").close()
-        return
-    for name, col in [
-        ("face", (210, 168, 140, 255)),
-        ("face_alt", (180, 200, 160, 255)),
-        ("torso", (48, 50, 68, 255)),
-        ("arm", (210, 168, 140, 255)),
-        ("leg", (30, 30, 42, 255)),
-        ("neck", (210, 168, 140, 255)),
-    ]:
-        Image.new("RGBA", (256, 256), col).save(os.path.join(OUT, name + ".png"))
-    print("placeholders ->", OUT)
-
 def main():
     src_root = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "third_party", "Square_Character")
     if not os.path.isdir(src_root):
@@ -51,9 +35,8 @@ def main():
                 src_root = p
                 break
     if not os.path.isdir(src_root):
-        print("Source not found:", src_root)
-        placeholders()
-        return
+        print("Source not found:", src_root, file=sys.stderr)
+        raise SystemExit(2)
     mapping = {
         "Default Face.tif": "face.png",
         "Zombie Face.tif": "face_alt.png",
@@ -75,7 +58,8 @@ def main():
             elif low.endswith(".fbx"):
                 shutil.copy2(full, os.path.join(OUT, "character.fbx"))
     if not any(fn.endswith(".png") for fn in os.listdir(OUT)):
-        placeholders()
+        print("No supported TIFF textures were found in:", src_root, file=sys.stderr)
+        raise SystemExit(1)
     print("Done", OUT)
 
 if __name__ == "__main__":
