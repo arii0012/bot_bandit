@@ -21,6 +21,12 @@
 
 namespace WinAdmin {
 
+std::string TempZipPath() {
+  char tmpPath[MAX_PATH] = {};
+  GetTempPathA(MAX_PATH, tmpPath);
+  return std::string(tmpPath) + "BotBandit-Windows-x64.zip";
+}
+
 std::string DefaultInstallDir() {
   char buf[MAX_PATH] = {};
   if (SUCCEEDED(SHGetFolderPathA(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, buf)))

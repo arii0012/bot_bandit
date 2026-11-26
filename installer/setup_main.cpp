@@ -6,13 +6,6 @@
 #include <cstdio>
 #include <cstdlib>
 
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#endif
-
 static std::string g_dir;
 static std::string g_status = "Ready — download from GitHub Releases";
 static bool g_shortcut = true;
@@ -28,7 +21,7 @@ static void DrawBtn(Rectangle r, const char* label, bool disabled) {
   Color c = disabled ? Color{40, 40, 48, 255} : (h ? Color{255, 55, 95, 255} : Color{36, 36, 52, 255});
   DrawRectangleRounded(r, 0.2f, 8, c);
   int tw = MeasureText(label, 18);
-  DrawText(label, (int)(r.x + (r.width - tw) * 0.5f), (int)(r.y + 12), 18, WHITE);
+  DrawText(label, static_cast<int>(r.x + (r.width - tw) * 0.5f), static_cast<int>(r.y + 12), 18, WHITE);
 }
 
 static std::string ReleaseUrl() {
@@ -43,9 +36,7 @@ static void InstallWorker() {
   g_dlDone = false;
   g_dlOk = false;
 
-  char tmpPath[MAX_PATH] = {};
-  GetTempPathA(MAX_PATH, tmpPath);
-  std::string zip = std::string(tmpPath) + "BotBandit-Windows-x64.zip";
+  std::string zip = WinAdmin::TempZipPath();
   WinAdmin::DeleteFileQuiet(zip);
 
   std::string url = ReleaseUrl();
@@ -70,7 +61,7 @@ static void InstallWorker() {
   }
   WinAdmin::DeleteFileQuiet(zip);
 
-  std::string exe = g_dir + "\\botbandit.exe";
+  std::string exe = g_dir + "/botbandit.exe";
   if (g_shortcut) WinAdmin::CreateDesktopShortcut(exe, "BotBandit 3D");
   g_status = "Done!";
   g_progress = 1.f;
@@ -114,12 +105,11 @@ int main() {
     DrawText("Desktop shortcut", 72, 182, 18, WHITE);
     DrawText("Launch after install", 72, 218, 18, WHITE);
 
-    // progress
     DrawRectangleRounded(Rectangle{36, 270, 648, 22}, 0.3f, 8, Color{30, 30, 40, 255});
     float pw = 648.f * g_progress.load();
-    if (pw > 0) DrawRectangleRounded(Rectangle{36, 270, pw, 22}, 0.3f, 8, Color{0, 180, 255, 255});
+    if (pw > 0.f) DrawRectangleRounded(Rectangle{36, 270, pw, 22}, 0.3f, 8, Color{0, 180, 255, 255});
     char pct[32];
-    snprintf(pct, sizeof(pct), "%.0f%%", g_progress.load() * 100.f);
+    snprintf(pct, sizeof(pct), "%.0f%%", static_cast<double>(g_progress.load() * 100.f));
     DrawText(pct, 36, 300, 16, Color{160, 200, 220, 255});
     DrawText(g_status.c_str(), 100, 300, 16, Color{100, 255, 140, 255});
 
