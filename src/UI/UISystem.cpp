@@ -81,7 +81,7 @@ void UISystem::Draw() {
   if (radialAnim_ > 0.01f) {
     Vector2 c = {(float)sw * 0.5f, (float)sh * 0.5f};
     float R = 120.f * radialAnim_;
-    const char* labels[] = {"Work", "Rob", "Heist", "Travel", "Shop", "Craft", "Phone", "Hide"};
+    const char* labels[] = {"Работа", "Ограбление", "Налёт", "Переезд", "Магазин", "Создать", "Телефон", "Залечь"};
     int n = 8;
     for (int i = 0; i < n; ++i) {
       float a = -PI * 0.5f + i * (2 * PI / n);
@@ -219,7 +219,7 @@ void UISystem::DrawCharacterCreator() {
   if (btn(start, "НАЧАТЬ ИГРУ", true) || IsKeyPressed(KEY_ENTER)) {
     app_->SetState(AppState::Playing);
     if (app_->Cutscenes()) app_->Cutscenes()->Play("debut");
-    Toast("Добро пожаловать в Underworld");
+    Toast("Добро пожаловать в Подполье");
   }
   Rectangle quit = {(float)sw * 0.5f - 110, (float)sh - 40, 220, 36};
   if (btn(quit, "ВЫХОД", false)) {
@@ -280,11 +280,11 @@ void UISystem::DrawSettings() {
 void UISystem::DrawShop(int mode) {
   int sw = app_->ScreenW(), sh = app_->ScreenH();
   DrawRectangle(0, 0, sw, sh, Color{10, 10, 16, 255});
-  const char* title = "SHOP";
+  const char* title = "МАГАЗИН";
   const std::vector<ShopItem>* cat = &CatalogCars();
-  if (mode == (int)AppState::Houses) { title = "HOUSES"; cat = &CatalogHouses(); }
-  else if (mode == (int)AppState::Travel) { title = "TRAVEL"; cat = nullptr; }
-  else if (mode == (int)AppState::Shop) { title = "SHOP"; cat = &CatalogClothes(); }
+  if (mode == (int)AppState::Houses) { title = "НЕДВИЖИМОСТЬ"; cat = &CatalogHouses(); }
+  else if (mode == (int)AppState::Travel) { title = "ПУТЕШЕСТВИЯ"; cat = nullptr; }
+  else if (mode == (int)AppState::Shop) { title = "МАГАЗИН"; cat = &CatalogClothes(); }
 
   DrawTextRu(title, 40, 30, 32, WHITE);
   DrawTextRu("ESC — назад", 40, 70, 16, Color{140, 140, 160, 255});
@@ -303,7 +303,7 @@ void UISystem::DrawShop(int mode) {
       DrawTextRu(CityList[i], (int)(r.x + 16), (int)(r.y + 16), 20, WHITE);
       if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && p) {
         p->SetCity(CityList[i]);
-        Toast(std::string("Travel -> ") + CityList[i]);
+        Toast(std::string("Переезд: ") + CityList[i]);
         app_->SetState(AppState::Playing);
       }
     }
@@ -326,7 +326,7 @@ void UISystem::DrawShop(int mode) {
     Rectangle buy{card.x + card.width - 140, card.y + 12, 120, 40};
     bool h = CheckCollisionPointRec(GetMousePosition(), buy);
     DrawRectangleRounded(buy, 0.25f, 8, h ? Color{255, 60, 90, 255} : Color{220, 40, 70, 255});
-    DrawTextRu("BUY", (int)(buy.x + 36), (int)(buy.y + 10), 18, WHITE);
+    DrawTextRu("КУПИТЬ", (int)(buy.x + 36), (int)(buy.y + 10), 18, WHITE);
     if (h && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && p) {
       if (p->Money() >= it.price) {
         p->AddMoney(-it.price);
@@ -334,13 +334,13 @@ void UISystem::DrawShop(int mode) {
         else if (std::string(it.kind) == "cars") { p->Inv().cars.push_back(it.name); p->SetActiveCar(it.name); }
         else if (std::string(it.kind) == "weapons") p->Inv().weapons.push_back(it.name);
         else if (std::string(it.kind) == "houses") p->Inv().items.push_back(it.id);
-        Toast(std::string("Bought ") + it.name);
-      } else Toast("Not enough money");
+        Toast(std::string("Куплено: ") + it.name);
+      } else Toast("Недостаточно денег");
     }
   }
 }
 
 void UISystem::OpenShop() {
-  Toast("Magazin otkryt");
+  Toast("Магазин открыт");
   // shop panel uses existing shop UI if any
 }
