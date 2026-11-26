@@ -44,6 +44,7 @@ public:
 
 private:
   void EnsureCity();
+  void EnsureBuildings(int sw);
   void DrawSky3D();
   void DrawGround();
   void DrawBuildings3D();
@@ -56,5 +57,14 @@ private:
   std::vector<Building3D> buildings3_;
   std::vector<TrafficCar> traffic_;
   bool ready_ = false;
+  struct Building2D { float baseX = 0.f; int width = 0; int height = 0; int seed = 0; };
+  std::vector<Building2D> buildings_;
+  int lastSw_ = -1;
+  float scroll_ = 0.f;
+  float trafficT_ = 0.f;
+  float pedT_ = 0.f;
+  float lastSkyT_ = -100.f;
+  Color skyTop_{6, 6, 18, 255};
+  Color skyBot_{14, 10, 28, 255};
   int interiorHouse_ = -1;
 };
