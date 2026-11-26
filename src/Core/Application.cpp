@@ -433,7 +433,7 @@ void Application::Draw() {
       // scales mini
       if (player_) {
         char sc[80];
-        snprintf(sc, sizeof(sc), "Ulica %d  Sistema %d  Dolg %d",
+        snprintf(sc, sizeof(sc), "УЛИЦА %d  СИСТЕМА %d  ДОЛГ %d",
                  ReputationScales::Get().Street(),
                  ReputationScales::Get().System(),
                  ReputationScales::Get().Debt());
@@ -452,14 +452,35 @@ void Application::Draw() {
 
 void Application::DrawHUD() {
   if (!player_) return;
-  float pad = 16.f;
-  char buf[192];
-  /* money via FormatRub */
-    snprintf(buf, sizeof(buf), "$%lld  LV%d  EN%d  WANTED%d",
-           (long long)player_->Money(), player_->Level(), player_->Energy(), player_->Wanted());
-  DrawRectangleRounded(Rectangle{pad, pad, 420, 40}, 0.2f, 8, Color{10, 10, 18, 200});
-  FontUI::Get().Draw(buf, pad + 12, pad + 10, 18, Color{240, 240, 250, 255});
-  // bottom action bar
+  float pad = 14.f;
+  float x = pad, y = pad;
+  auto capsule = [&](const char* text, Color accent) {
+    int tw = FontUI::Get().Measure(text, 16) + 28;
+    DrawRectangleRounded(Rectangle{x, y, (float)tw, 34.f}, 0.45f, 8, Color{12, 12, 20, 210});
+    DrawRectangleRoundedLines(Rectangle{x, y, (float)tw, 34.f}, 0.45f, 8, Fade(accent, 0.55f));
+    FontUI::Get().Draw(text, x + 12.f, y + 9.f, 16, WHITE);
+    x += tw + 10.f;
+  };
+  capsule(ArtworkRenderer::FormatRub(player_->Money()).c_str(), Color{244, 196, 48, 255});
+  char b[64];
+  snprintf(b, sizeof(b), "УР. %d", player_->Level());
+  capsule(b, Color{0, 220, 255, 255});
+  snprintf(b, sizeof(b), "ЭН %d/100", player_->Energy());
+  capsule(b, Color{100, 220, 140, 255});
+  if (player_->Wanted() > 0) {
+    snprintf(b, sizeof(b), "РОЗЫСК %d", player_->Wanted());
+    capsule(b, Color{255, 70, 90, 255});
+  }
+  // second row scales
+  x = pad;
+  y = pad + 42.f;
+  snprintf(b, sizeof(b), "УЛИЦА %d", ReputationScales::Get().Street());
+  capsule(b, Color{220, 80, 100, 255});
+  snprintf(b, sizeof(b), "СИСТЕМА %d", ReputationScales::Get().System());
+  capsule(b, Color{80, 140, 255, 255});
+  snprintf(b, sizeof(b), "ДОЛГ %d", ReputationScales::Get().Debt());
+  capsule(b, Color{180, 160, 100, 255});
+
   float barH = 52.f;
   DrawRectangle(0, screenH_ - (int)barH, screenW_, (int)barH, Color{10, 10, 18, 220});
   const char* labs[] = {"ТЕЛЕФОН (P)", "ИНВЕНТАРЬ (I)", "ГАРАЖ (G)", "МЕНЮ (ESC)"};
@@ -480,7 +501,7 @@ void Application::DrawHUD() {
   }
 }
 
-void Application::DrawPauseMenu() {
+void Application::DrawPauseMenuvoid Application::DrawPauseMenu() {
   int sw = screenW_, sh = screenH_;
   DrawRectangle(0, 0, sw, sh, Color{0, 0, 0, 160});
   float w = 360, h = 220;

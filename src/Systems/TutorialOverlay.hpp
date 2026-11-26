@@ -48,17 +48,17 @@ public:
     DrawRectangleRoundedLines(Rectangle{x, y, w, h}, 0.1f, 10, Color{220, 40, 70, 200});
 
     char hdr[48];
-    snprintf(hdr, sizeof(hdr), "OBUCHENIE %d/5", step_ + 1);
+    snprintf(hdr, sizeof(hdr), "ОБУЧЕНИЕ %d/5", step_ + 1);
     FontUI::Get().Draw(hdr, x + 18, y + 12, 14, Color{0, 220, 255, 255});
     FontUI::Get().Draw(titles_[step_], x + 18, y + 36, 20, WHITE);
     FontUI::Get().Draw(hints_[step_], x + 18, y + 68, 15, Color{180, 180, 200, 255});
-    FontUI::Get().Draw("SPACE - dalee   BACKSPACE - skip", x + 18, y + 96, 13, Color{130, 130, 150, 255});
+    FontUI::Get().Draw("ПРОБЕЛ — далее   BACKSPACE — пропуск", x + 18, y + 96, 13, Color{130, 130, 150, 255});
 
     // skip button
     Rectangle skip{sw - 160.f, 16.f, 140.f, 32.f};
     bool hs = CheckCollisionPointRec(GetMousePosition(), skip);
     DrawRectangleRounded(skip, 0.25f, 8, hs ? Color{255, 60, 90, 255} : Color{36, 36, 52, 255});
-    FontUI::Get().DrawCentered("PROPUSTIT", skip.x + skip.width * 0.5f, skip.y + 8.f, 14, WHITE);
+    FontUI::Get().DrawCentered("ПРОПУСТИТЬ", skip.x + skip.width * 0.5f, skip.y + 8.f, 14, WHITE);
     if (hs && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) Skip();
   }
 
@@ -79,17 +79,17 @@ private:
   int step_ = 0;
   ActionId highlight_ = ActionId::Count;
   const char* titles_[5] = {
-    "Energiya i smena",
-    "Otdyh",
-    "Nakopi na VAZ",
-    "Magazin i telefon",
-    "Baryga i seyv",
+    "Энергия и смена",
+    "Отдых",
+    "Накопи на ВАЗ",
+    "Магазин и телефон",
+    "Барыга и сохранение",
   };
   const char* hints_[5] = {
-    "Nazhmi RABOTA - tratitsya EN, kapayut rubli",
-    "EN malo? OTDYH ili dom vosst usuallyayut sily",
-    "Bez tachki ty peshkom - kopit' na Prioru",
-    "MAGAZIN: odezhda, auto. P - smartfon",
-    "BARYGA sbyvaet krad. ESC - menu, seyv",
+    "Нажми РАБОТА - тратится ЭН, капают рубли",
+    "Мало ЭН? ОТДЫХ ili dom vosst usuallyayut sily",
+    "Без тачки ты пешком - копи на Приору",
+    "МАГАЗИН: одежда, авто. P — смартфон",
+    "БАРЫГА сбывает краденое. ESC — меню, сейв",
   };
 };

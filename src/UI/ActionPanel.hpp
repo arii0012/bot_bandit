@@ -107,7 +107,7 @@ public:
 
     // resource strip
     char buf[96];
-    snprintf(buf, sizeof(buf), "EN %d/100   Heat %d   %s", p.Energy(), p.Heat(),
+    snprintf(buf, sizeof(buf), "ЭН %d/100   ЖАР %d   %s", p.Energy(), p.Heat(),
              ArtworkRenderer::FormatRub(p.Money()).c_str());
     FontUI::Get().Draw(buf, 12.f, y - 22.f, 14, Color{200, 200, 220, 255});
   }
@@ -140,12 +140,12 @@ private:
 
   ActionId highlight_ = ActionId::Count;
   ActionDef defs_[7] = {
-    {ActionId::Work, "RABOTA", 12, 0, 14.f, 4000},
-    {ActionId::Rob, "OGRABLENIE", 20, 8, 22.f, 12000},
-    {ActionId::Fence, "BARYGA", 8, 4, 18.f, 0},
-    {ActionId::LayLow, "ZALECH", 5, 0, 30.f, -5000},
-    {ActionId::Shop, "MAGAZIN", 0, 0, 1.f, 0},
-    {ActionId::Travel, "PEREEZD", 10, 0, 40.f, 0},
-    {ActionId::Rest, "OTDYH", 0, 0, 20.f, 0},
+    {ActionId::Work, "РАБОТА", 12, 0, 14.f, 4000},
+    {ActionId::Rob, "ОГРАБЛЕНИЕ", 20, 8, 22.f, 12000},
+    {ActionId::Fence, "БАРЫГА", 8, 4, 18.f, 0},
+    {ActionId::LayLow, "ЗАЛЕЧЬ", 5, 0, 30.f, -5000},
+    {ActionId::Shop, "МАГАЗИН", 0, 0, 1.f, 0},
+    {ActionId::Travel, "ПЕРЕЕЗД", 10, 0, 40.f, 0},
+    {ActionId::Rest, "ОТДЫХ", 0, 0, 20.f, 0},
   };
 };

@@ -63,7 +63,7 @@ public:
 
   void DrawHUD(float x, float y) {
     char buf[96];
-    snprintf(buf, sizeof(buf), "Tochki %d  |  Sudimosti %d  |  Hot %.0fs",
+    snprintf(buf, sizeof(buf), "Точки %d  |  Судимости %d  |  Жар %.0fs",
              (int)points_.size(), convictions_, hot_);
     FontUI::Get().Draw(buf, x, y, 13, IsHot() ? Color{255, 80, 80, 255} : Color{160, 160, 180, 255});
   }
