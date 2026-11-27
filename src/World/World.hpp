@@ -39,6 +39,7 @@ public:
   int NearHouseIndex(Vector3 playerPos, float radius = 3.f) const;
   bool TryBuyHouse(int idx, class Character& p, std::string& msg);
   bool EnterHouse(int idx);
+  void SyncOwnedHouses(const class Character& p);
 
   const std::vector<Building3D>& Buildings() const { return buildings3_; }
 

@@ -1,10 +1,11 @@
-#include "raymath.h"
 #include "Character.hpp"
+#include "raymath.h"
 #include "Core/FontUI.hpp"
 #include "Core/Config.hpp"
 #include "Graphics/ModelStore.hpp"
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 Character::Character() {
   skills_["stealth"] = 0;
@@ -315,3 +316,73 @@ void Character::Draw3D(Vector3 pos, float scale) {
   }
   (void)skinShadow;
 }
+
+void Character::AddHeat(int value) {
+  const long long next = static_cast<long long>(heat_) + value;
+  heat_ = static_cast<int>(std::clamp(next, 0LL, 100LL));
+}
+
+int Character::Skill(const std::string& id) const {
+  const auto it = skills_.find(id);
+  return it == skills_.end() ? 0 : it->second;
+}
+
+void Character::AddSkill(const std::string& id, int value) {
+  if (id.empty()) return;
+  int& current = skills_[id];
+  const long long next = static_cast<long long>(current) + value;
+  current = static_cast<int>(std::clamp(next, 0LL, 100LL));
+}
+
+void Character::AddStat(const std::string& stat, int value) {
+  auto apply = [value](int& current) {
+    const long long next = static_cast<long long>(current) + value;
+    current = static_cast<int>(std::clamp(next, 1LL, 100LL));
+  };
+  if (stat == "strength") apply(strength_);
+  else if (stat == "agility") apply(agility_);
+  else if (stat == "intelligence") apply(intelligence_);
+  else AddSkill(stat, value);
+}
+
+std::vector<std::string> Character::AddExp(int amount) {
+  std::vector<std::string> messages;
+  if (amount <= 0 || level_ >= 9999) return messages;
+
+  long long remaining = static_cast<long long>(std::max(0, exp_)) + amount;
+  messages.push_back("Получено опыта: +" + std::to_string(amount));
+
+  while (level_ < 9999) {
+    const long long required = static_cast<long long>(level_) * 100LL;
+    if (remaining < required) break;
+    remaining -= required;
+    ++level_;
+    if (skillPoints_ < std::numeric_limits<int>::max()) ++skillPoints_;
+    messages.push_back("Новый уровень: " + std::to_string(level_));
+  }
+
+  exp_ = static_cast<int>(std::min<long long>(
+      remaining, std::numeric_limits<int>::max()));
+  return messages;
+}
+
+void Character::DrawCar(float x, float y) {
+  const Color body = Color{carR_, carG_, carB_, 255};
+  const Color glass = Color{105, 170, 205, 255};
+  DrawEllipse((int)x, (int)(y + 35), 78, 12, Fade(BLACK, 0.28f));
+  DrawRectangleRounded(Rectangle{x - 72, y - 4, 144, 42}, 0.22f, 8, body);
+  DrawRectangleRounded(Rectangle{x - 38, y - 28, 76, 34}, 0.28f, 8, Shade(body, 0.88f));
+  DrawRectangleRounded(Rectangle{x - 30, y - 24, 28, 24}, 0.18f, 5, glass);
+  DrawRectangleRounded(Rectangle{x + 3, y - 24, 25, 24}, 0.18f, 5, glass);
+  DrawCircle((int)(x - 43), (int)(y + 34), 13, Color{24, 25, 30, 255});
+  DrawCircle((int)(x + 43), (int)(y + 34), 13, Color{24, 25, 30, 255});
+  DrawCircle((int)(x - 43), (int)(y + 34), 6, Color{155, 160, 170, 255});
+  DrawCircle((int)(x + 43), (int)(y + 34), 6, Color{155, 160, 170, 255});
+  DrawRectangle(x - 67, y + 5, 10, 9, Color{245, 225, 160, 255});
+  DrawRectangle(x + 57, y + 5, 10, 9, Color{210, 55, 55, 255});
+  if (neonCar_) {
+    DrawLineEx(Vector2{x - 55, y + 42}, Vector2{x + 55, y + 42}, 3.f,
+               Fade(Color{0, 220, 255, 255}, 0.8f));
+  }
+}
+
